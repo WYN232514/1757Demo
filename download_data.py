@@ -68,9 +68,9 @@ def parse_args() -> argparse.Namespace:
         help="Metrics per request; default 1 to match the known working example",
     )
     parser.add_argument(
-        "--convert-cst-to-utc",
+        "--time-is-utc",
         action="store_true",
-        help="Subtract 8 hours before sending; by default Beijing time is sent unchanged",
+        help="Interpret --fault-time as UTC; by default it is Beijing time",
     )
     parser.add_argument(
         "--metrics-json",
@@ -95,7 +95,7 @@ def main() -> int:
             train=args.train,
             fault_time=args.fault_time,
             fault_code=args.fault_code,
-            time_is_cst=args.convert_cst_to_utc,
+            time_is_cst=not args.time_is_utc,
             before_min=args.before_min,
             after_min=args.after_min,
             metrics_json=args.metrics_json,
