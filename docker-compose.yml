@@ -1,0 +1,17 @@
+services:
+  fault-analysis-api:
+    build: .
+    image: vcb-fault-analysis:latest
+    container_name: vcb-fault-analysis-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      RAILIVERSE_ENDPOINT: ${RAILIVERSE_ENDPOINT}
+      RAILIVERSE_CLIENT_ID: ${RAILIVERSE_CLIENT_ID}
+      RAILIVERSE_CLIENT_SECRET: ${RAILIVERSE_CLIENT_SECRET}
+      API_KEY: ${API_KEY:-}
+      QDRANT_URL: ${QDRANT_URL:-http://10.0.1.87:6333}
+    volumes:
+      - ./gateway_downloads/docker:/data/gateway_queries
+      - ./case_library:/app/case_library:ro

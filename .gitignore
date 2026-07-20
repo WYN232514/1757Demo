@@ -1,0 +1,43 @@
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+config.yaml
+**/llm_api_config.json
+
+# Python/editor caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.vscode/
+.idea/
+
+# Large or sensitive business data
+01_数据整理/
+gateway_downloads/
+backups/
+分析文件/
+case_library/*
+!case_library/.gitkeep
+fault_extractor/**/output/
+
+# Work orders, reports and generated data
+*.xls
+*.xlsx
+*.csv
+*.npz
+*.npy
+*.joblib
+*.zip
+*.rar
+*.png
+*.html
+*.log
+
+# Keep source-controlled runtime configuration
+!gateway_metrics.json
+
+# Jupyter and scratch files
+*.ipynb
+scratch_*
