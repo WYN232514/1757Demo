@@ -119,21 +119,17 @@ def print_result(result: dict[str, Any]) -> None:
 
     print("\n========== 相似工单 ==========")
     for item in work_orders:
+        work_order = item.get("work_order", item)
         print(
-            f"\n#{item.get('rank', '')} 工单 {item.get('work_order_no', '')} "
+            f"\n#{item.get('rank', '')} 工单 {work_order.get('work_order_no', '')} "
             f"（最终相似度 {float(item.get('similarity', 0)):.4f}）"
         )
         print(
-            f"  车号/车厢：{item.get('train', '')} / {item.get('car_no', '')}　"
-            f"故障时间：{item.get('fault_time', '')}"
+            f"  车号/车厢：{work_order.get('train', '')} / {work_order.get('car_no', '')}　"
+            f"故障时间：{work_order.get('fault_time', '')}"
         )
-        print(
-            f"  原始相似度：{float(item.get('raw_similarity', 0)):.4f}　"
-            f"细节相似度：{float(item.get('detail_similarity', 0)):.4f}　"
-            f"RF状态：{item.get('ramping_finish_status', '')}"
-        )
-        print(f"  备注：{item.get('remark', '')}")
-        description = str(item.get("long_description", "") or "").strip()
+        print(f"  备注：{work_order.get('remark', '')}")
+        description = str(work_order.get("long_description", "") or "").strip()
         if description:
             print(f"  工单描述：{description}")
 

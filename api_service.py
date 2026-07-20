@@ -29,7 +29,7 @@ from app_visualize import compute_query
 from gateway_download import download_fault_window, load_metrics
 
 
-API_VERSION = "1.0.0"
+API_VERSION = "1.1.0"
 METRICS_JSON = Path(os.getenv("GATEWAY_METRICS_JSON", ROOT / "gateway_metrics.json"))
 QUERY_ROOT = Path(os.getenv("GATEWAY_QUERY_ROOT", ROOT / "gateway_downloads" / "api_queries"))
 CASE_LIBRARY_DIR = Path(os.getenv("CASE_LIBRARY_DIR", ROOT / "case_library"))
@@ -119,28 +119,28 @@ def similar_work_orders(q: dict[str, Any]) -> list[dict[str, Any]]:
     for rank, idx in enumerate(q["top_idx"], start=1):
         idx = int(idx)
         meta = metadata.iloc[idx]
-        fields = {
-            "rank": rank,
-            "case_id": meta.get("case_id", ""),
-            "work_order_no": meta.get("work_order_no", ""),
-            "train": meta.get("train", ""),
-            "car_no": meta.get("car_no", ""),
-            "fault_time": meta.get("fault_time_raw", ""),
-            "fault_time_utc": meta.get("fault_time_utc", ""),
-            "similarity": q["sims"][idx],
-            "raw_similarity": q["raw_sims"][idx],
-            "detail_similarity": q["detail_sims"][idx],
-            "shared_non_core_count": q["shared_non_core_counts"][idx],
-            "ramping_finish_status": q["case_rf_labels"][idx],
-            "remark": meta.get("remark", ""),
-            "long_description": meta.get("long_description", ""),
-            "segment_start": meta.get("segment_start", ""),
-            "segment_end": meta.get("segment_end", ""),
-            "selection_transition": meta.get("selection_transition", ""),
-            "selection_rule": meta.get("selection_rule", ""),
-            "selection_note": meta.get("selection_note", ""),
+        car_no = json_safe(meta.get("car_no", ""))
+        try:
+            car_no = f"{int(float(car_no)):02d}"
+        except (TypeError, ValueError):
+            car_no = str(car_no or "")
+
+        work_order = {
+            "work_order_no": str(json_safe(meta.get("work_order_no", "")) or ""),
+            "case_id": str(json_safe(meta.get("case_id", "")) or ""),
+            "train": str(json_safe(meta.get("train", "")) or ""),
+            "car_no": car_no,
+            "fault_time": json_safe(meta.get("fault_time_raw", "")),
+            "remark": json_safe(meta.get("remark", "")),
+            "long_description": json_safe(meta.get("long_description", "")),
         }
-        rows.append({key: json_safe(value) for key, value in fields.items()})
+        rows.append(
+            {
+                "rank": rank,
+                "similarity": json_safe(q["sims"][idx]),
+                "work_order": work_order,
+            }
+        )
     return rows
 
 

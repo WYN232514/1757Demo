@@ -127,6 +127,30 @@ Content-Type: application/json
 }
 ```
 
+相似工单响应结构：
+
+```json
+{
+  "similar_work_orders": [
+    {
+      "rank": 1,
+      "similarity": 0.88,
+      "work_order": {
+        "work_order_no": "5001603315",
+        "case_id": "5001603315",
+        "train": "T15",
+        "car_no": "05",
+        "fault_time": "2026-06-08 05:29:00",
+        "remark": "P044 TMS VCB Trip Detected at MKK UT",
+        "long_description": null
+      }
+    }
+  ]
+}
+```
+
+`similarity` 是最终用于排序和阈值过滤的相似度。接口不返回原始相似度、细节相似度、选择规则、选择备注等内部计算字段。
+
 下载后的标准数据保存在 `gateway_downloads/api_queries/`，主要列为：
 
 ```text

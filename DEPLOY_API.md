@@ -94,15 +94,16 @@ Invoke-RestMethod `
   "similar_work_orders": [
     {
       "rank": 1,
-      "work_order_no": "5001614276",
       "similarity": 0.88,
-      "raw_similarity": 0.91,
-      "detail_similarity": 0.82,
-      "train": "T9",
-      "car_no": "05",
-      "fault_time": "2026-06-09 07:32:00",
-      "remark": "...",
-      "long_description": "..."
+      "work_order": {
+        "work_order_no": "5001614276",
+        "case_id": "5001614276",
+        "train": "T9",
+        "car_no": "05",
+        "fault_time": "2026-06-09 07:32:00",
+        "remark": "...",
+        "long_description": null
+      }
     }
   ]
 }
