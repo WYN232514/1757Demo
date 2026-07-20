@@ -35,7 +35,9 @@ DEFAULT_DATA_DIR = "01_数据整理"
 DEFAULT_OUTPUT_ROOT = "gateway_downloads/queries"
 DEFAULT_BEFORE_MIN = 30
 DEFAULT_AFTER_MIN = 30
-DEFAULT_BATCH_SIZE = 25
+# The external API is known to accept one metric per request. Keep this
+# conservative default for the production query flow; CLI callers can raise it.
+DEFAULT_BATCH_SIZE = 1
 STANDARD_COLUMNS = [
     "_time",
     "_value",
@@ -134,16 +136,18 @@ def load_metrics(
                 code = item.strip()
                 if not code:
                     raise ValueError("metrics JSON 中不能包含空 code")
-                result.append({"code": code, "coach": coach_from_code(code)})
+                result.append({"code": code, "equipUnit": coach_from_code(code)})
                 continue
             if not isinstance(item, dict) or "code" not in item:
                 raise ValueError("每个 metric 必须是 code 字符串或至少包含 code 的对象")
             code = str(item["code"]).strip()
-            coach = str(item.get("coach", coach_from_code(code))).strip()
-            result.append({"code": code, "coach": coach})
+            equip_unit = str(
+                item.get("equipUnit", item.get("coach", coach_from_code(code)))
+            ).strip()
+            result.append({"code": code, "equipUnit": equip_unit})
         return result
     return [
-        {"code": code, "coach": coach}
+        {"code": code, "equipUnit": coach}
         for code, coach in discover_metrics(str(Path(data_dir).resolve()))
     ]
 
@@ -209,8 +213,16 @@ def parse_gateway_csv(
     metrics: Sequence[dict[str, str]],
     train: str,
 ) -> pd.DataFrame:
-    """把网关的宽表响应转换为分析引擎使用的标准长表。"""
+    """Convert either the new JSON response or the legacy CSV to long rows."""
     text = decode_csv_content(content) if isinstance(content, bytes) else content
+    stripped = text.lstrip("\ufeff \t\r\n")
+    if stripped.startswith(("{", "[")):
+        try:
+            payload = json.loads(stripped)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"网关返回了无效 JSON: {exc}") from exc
+        return parse_gateway_json(payload, metrics, train)
+
     lines = text.splitlines()
     expected_codes = {str(item["code"]) for item in metrics}
     header_idx = _find_gateway_header(lines, expected_codes)
@@ -251,6 +263,83 @@ def parse_gateway_csv(
     long_df["ts_date"] = (long_df["_time"] + pd.Timedelta(hours=8)).dt.strftime("%Y-%m-%d")
     long_df["eventCode"] = 1757
     return long_df[STANDARD_COLUMNS].sort_values(["code", "_time"]).reset_index(drop=True)
+
+
+def parse_gateway_json(
+    payload: Any,
+    metrics: Sequence[dict[str, str]],
+    train: str,
+) -> pd.DataFrame:
+    """Convert the external param/list JSON envelope to standard long rows."""
+    if not isinstance(payload, dict):
+        raise ValueError("网关 JSON 顶层必须是对象")
+
+    success = payload.get("success")
+    response_code = payload.get("code")
+    if success is False or (response_code is not None and str(response_code) != "200"):
+        message = payload.get("message") or payload.get("error") or "未知错误"
+        raise ValueError(f"网关业务错误 code={response_code}: {message}")
+
+    result = payload.get("result")
+    if not isinstance(result, list):
+        raise ValueError("网关 JSON 缺少 result 数组")
+
+    expected_codes = {str(item["code"]).strip() for item in metrics}
+    frames: list[pd.DataFrame] = []
+    for series in result:
+        if not isinstance(series, dict):
+            continue
+        metric = series.get("metric") or {}
+        code = str(metric.get("code", "")).strip()
+        if not code or (expected_codes and code not in expected_codes):
+            continue
+        points = series.get("pointDataList")
+        if not isinstance(points, list) or not points:
+            continue
+
+        frame = pd.DataFrame(points)
+        if "timeStamp" in frame.columns:
+            timestamps = pd.to_datetime(frame["timeStamp"], errors="coerce", utc=True)
+        elif "timestamp" in frame.columns:
+            timestamps = pd.to_datetime(frame["timestamp"], errors="coerce", utc=True)
+        elif "sourceTimeStamp" in frame.columns:
+            timestamps = pd.to_datetime(
+                frame["sourceTimeStamp"], errors="coerce", unit="ms", utc=True
+            )
+        else:
+            raise ValueError(f"测点 {code} 的 pointDataList 缺少时间字段")
+        if "value" not in frame.columns:
+            raise ValueError(f"测点 {code} 的 pointDataList 缺少 value 字段")
+
+        current = pd.DataFrame(
+            {
+                "_time": timestamps.dt.tz_localize(None),
+                "_value": pd.to_numeric(frame["value"], errors="coerce"),
+                "code": code,
+            }
+        ).dropna(subset=["_time", "_value"])
+        if not current.empty:
+            frames.append(current)
+
+    if not frames:
+        # A successful request may legitimately contain an empty result for one
+        # metric. The caller can continue with the remaining metric batches and
+        # will raise only if the complete fault window contains no data at all.
+        return pd.DataFrame(columns=STANDARD_COLUMNS)
+
+    long_df = pd.concat(frames, ignore_index=True)
+    long_df["equipInstance"] = normalize_train(train)
+    long_df["status"] = 0
+    long_df["ts_date"] = (long_df["_time"] + pd.Timedelta(hours=8)).dt.strftime(
+        "%Y-%m-%d"
+    )
+    long_df["eventCode"] = 1757
+    return (
+        long_df[STANDARD_COLUMNS]
+        .drop_duplicates(subset=["_time", "code", "equipInstance"], keep="last")
+        .sort_values(["code", "_time"])
+        .reset_index(drop=True)
+    )
 
 
 def _query_key(train: str, start_utc: pd.Timestamp, end_utc: pd.Timestamp) -> str:
@@ -312,8 +401,10 @@ def download_fault_window(
     fault_utc = fault_local - pd.Timedelta(hours=8) if time_is_cst else fault_local
     start_utc = fault_utc - pd.Timedelta(minutes=int(before_min))
     end_utc = fault_utc + pd.Timedelta(minutes=int(after_min))
-    local_start = fault_local - pd.Timedelta(minutes=int(before_min))
-    local_end = fault_local + pd.Timedelta(minutes=int(after_min))
+    # The external endpoint accepts Beijing time, while point timestamps in its
+    # JSON response are UTC (ISO strings ending in Z).
+    gateway_start_cst = start_utc + pd.Timedelta(hours=8)
+    gateway_end_cst = end_utc + pd.Timedelta(hours=8)
 
     metrics = load_metrics(metrics_json, metrics_data_dir)
     output_dir = Path(output_root) / _query_key(train, start_utc, end_utc)
@@ -331,7 +422,9 @@ def download_fault_window(
     }
     expected_files = tuple(
         output_dir / f"{day:%Y-%m-%d}.csv"
-        for day in pd.date_range(local_start.normalize(), local_end.normalize(), freq="D")
+        for day in pd.date_range(
+            gateway_start_cst.normalize(), gateway_end_cst.normalize(), freq="D"
+        )
     )
     if reuse and _manifest_matches(manifest_path, manifest_base) and all(p.exists() for p in expected_files):
         current = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -362,10 +455,10 @@ def download_fault_window(
         groups = list(batched(metrics, int(batch_size)))
         for index, group in enumerate(groups, start=1):
             payload = {
-                "trainType": train_type,
-                "bucket": train,
-                "startTime": start_utc.strftime("%Y-%m-%d %H:%M:%S"),
-                "endTime": end_utc.strftime("%Y-%m-%d %H:%M:%S"),
+                "equipModel": train_type,
+                "equipInstance": train,
+                "startTime": gateway_start_cst.strftime("%Y-%m-%d %H:%M:%S"),
+                "endTime": gateway_end_cst.strftime("%Y-%m-%d %H:%M:%S"),
                 "metrics": group,
                 "paramType": "METRIC",
             }
@@ -386,7 +479,9 @@ def download_fault_window(
     if combined.empty:
         raise RuntimeError("网关响应解析成功，但故障窗口内没有有效测点数据")
 
-    files = _write_standard_partitions(combined, output_dir, local_start, local_end)
+    files = _write_standard_partitions(
+        combined, output_dir, gateway_start_cst, gateway_end_cst
+    )
     manifest = dict(manifest_base)
     manifest.update({"row_count": len(combined), "files": [p.name for p in files]})
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -19,6 +19,31 @@ docker compose up -d --build
 
 完整部署和调用示例见 [DEPLOY_API.md](DEPLOY_API.md)。
 
+## 测试调用
+
+Docker API 启动后，可以交互输入四项故障信息：
+
+```powershell
+python test_api_call.py --api-key "你的API_KEY"
+```
+
+也可以一次传入全部参数：
+
+```powershell
+python test_api_call.py `
+  --api-key "你的API_KEY" `
+  --train T9 `
+  --car-no 05 `
+  --fault-time "2026-07-16 10:10:00" `
+  --fault-code P026
+```
+
+调用临时公网地址时增加：
+
+```powershell
+--url "https://你的临时域名/api/v1/fault-analysis"
+```
+
 ## 必要案例库
 
 `case_library/` 中必须存在：

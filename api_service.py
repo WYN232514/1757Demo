@@ -16,15 +16,19 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from starlette.concurrency import run_in_threadpool
+
+
+ROOT = Path(__file__).resolve().parent
+load_dotenv(ROOT / ".env")
 
 from app_visualize import compute_query
 from gateway_download import download_fault_window, load_metrics
 
 
-ROOT = Path(__file__).resolve().parent
 API_VERSION = "1.0.0"
 METRICS_JSON = Path(os.getenv("GATEWAY_METRICS_JSON", ROOT / "gateway_metrics.json"))
 QUERY_ROOT = Path(os.getenv("GATEWAY_QUERY_ROOT", ROOT / "gateway_downloads" / "api_queries"))
@@ -36,7 +40,7 @@ class FaultAnalysisRequest(BaseModel):
     train: str = Field(description="车号，例如 T9")
     car_no: str = Field(description="故障车厢号：02、05 或 09")
     fault_time: str = Field(description="故障时间，例如 2026-07-16 10:10:00")
-    fault_code: str = Field(description="故障码，例如 P026")
+    fault_code: str = Field(description="故障标识：eventCode（例如 1757）或 P 故障码（例如 P026）")
     top_k: int = Field(default=5, ge=1, le=20)
     similarity_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
     time_is_cst: bool = Field(default=True, description="默认输入为北京时间")
@@ -78,9 +82,11 @@ class FaultAnalysisRequest(BaseModel):
     @classmethod
     def validate_fault_code(cls, value: str) -> str:
         text = re.sub(r"\s+", "", str(value)).upper()
+        if re.fullmatch(r"\d+", text):
+            return text
         match = re.fullmatch(r"P0*(\d+)", text)
         if not match:
-            raise ValueError("fault_code 格式错误，示例：P026")
+            raise ValueError("fault_code 格式错误，示例：1757 或 P026")
         return f"P{int(match.group(1)):03d}"
 
 

@@ -8,6 +8,7 @@ config.yaml
 # Python/editor caches
 __pycache__/
 *.py[cod]
+.api_service.pid
 .pytest_cache/
 .mypy_cache/
 .vscode/

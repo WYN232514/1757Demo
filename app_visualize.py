@@ -1928,7 +1928,7 @@ app.layout = html.Div(
                 html.Div([html.Label("车号（如 T9）"), dcc.Input(id="train", type="text", value="", style={"width": "120px"})]),
                 html.Div([html.Label("故障时间（YYYY-MM-DD HH:MM:SS）"), dcc.Input(id="fault_time", type="text", value="", style={"width": "220px"})]),
                 html.Div([html.Label("车厢号（如 02/05/09）"), dcc.Input(id="car_no", type="text", value="", style={"width": "110px"})]),
-                html.Div([html.Label("故障码（如 P026）"), dcc.Input(id="fault_code", type="text", value="", style={"width": "120px"})]),
+                html.Div([html.Label("eventCode/故障码（如 1757 或 P026）"), dcc.Input(id="fault_code", type="text", value="", style={"width": "150px"})]),
                 html.Div([html.Label("Top K"), dcc.Input(id="top_k", type="number", value=DEFAULT_TOP_K, min=1, max=20, style={"width": "80px"})]),
                 html.Div([html.Label("最低相似度"), dcc.Input(
                     id="similarity_threshold", type="number", value=DEFAULT_SIMILARITY_THRESHOLD,
