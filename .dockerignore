@@ -2,7 +2,11 @@
 gateway_downloads/
 backups/
 分析文件/
-fault_extractor/
+fault_extractor/**/__pycache__/
+fault_extractor/**/input/
+fault_extractor/**/output/*
+!fault_extractor/fault_extractor/output/reference_data_with_cause_inferenced.json
+fault_extractor/**/llm_api_config.json
 case_library/
 .git/
 .vscode/
@@ -18,6 +22,6 @@ tests/
 *.xls
 *.xlsx
 config.yaml
-llm_api_config.json
+**/llm_api_config.json
 scratch_*
 *.rar

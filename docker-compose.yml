@@ -15,3 +15,4 @@ services:
     volumes:
       - ./gateway_downloads/docker:/data/gateway_queries
       - ./case_library:/app/case_library:ro
+      - ./fault_extractor/fault_extractor/llm_api_config.json:/app/fault_extractor/fault_extractor/llm_api_config.json:ro

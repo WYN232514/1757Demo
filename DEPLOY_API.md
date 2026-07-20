@@ -102,10 +102,26 @@ Invoke-RestMethod `
         "car_no": "05",
         "fault_time": "2026-06-09 07:32:00",
         "remark": "...",
-        "long_description": null
+        "long_description": null,
+        "structured_info": {
+          "fault": "...",
+          "evidence": "...",
+          "component": "...",
+          "cause": "...",
+          "action": "...",
+          "result": "..."
+        }
       }
     }
-  ]
+  ],
+  "fault_report": {
+    "available": true,
+    "recommendation_source": "llm",
+    "situation_assessment": ["..."],
+    "recommended_steps": ["..."],
+    "document_focus": ["..."],
+    "cautions": ["..."]
+  }
 }
 ```
 

@@ -142,14 +142,57 @@ Content-Type: application/json
         "car_no": "05",
         "fault_time": "2026-06-08 05:29:00",
         "remark": "P044 TMS VCB Trip Detected at MKK UT",
-        "long_description": null
+        "long_description": null,
+        "structured_info": {
+          "fault": "P044 VCB tripped",
+          "evidence": "...",
+          "component": "VCB, APC, ATR",
+          "cause": "...",
+          "action": "...",
+          "result": "Function test passed",
+          "phenomenon_component": ["VCB"],
+          "phenomenon_events": ["tripped"],
+          "cause_components": ["VCB control chain"],
+          "cause_events": ["intermittent abnormality"],
+          "treatment_components": ["VCB", "APC"],
+          "treatment_events": ["checked", "function tested"],
+          "work_order": "5001603315",
+          "equip_model": "R-Train",
+          "equip_instance": "T15",
+          "equip_unit": "P044",
+          "replace_in_part": [],
+          "replace_out_part": []
+        }
       }
     }
-  ]
+  ],
+  "fault_report": {
+    "available": true,
+    "recommendation_source": "llm",
+    "reference_work_order_count": 5,
+    "missing_work_orders": [],
+    "situation_assessment": ["..."],
+    "recommended_steps": ["..."],
+    "document_focus": ["..."],
+    "cautions": ["..."],
+    "synthesis_facts": {}
+  }
 }
 ```
 
 `similarity` 是最终用于排序和阈值过滤的相似度。接口不返回原始相似度、细节相似度、选择规则、选择备注等内部计算字段。
+
+`structured_info` 来自 `fault_extractor` 的结构化工单知识库。`fault_report` 基于当前相似工单生成排查与维修参考建议：模型调用成功时 `recommendation_source` 为 `llm`；模型不可用时自动使用有据可查的规则化建议并标记为 `deterministic_fallback`。
+
+结构化工单与报告功能依赖以下本地文件：
+
+```text
+工单.xlsx
+fault_extractor/fault_extractor/output/reference_data_with_cause_inferenced.json
+fault_extractor/fault_extractor/llm_api_config.json
+```
+
+这些文件包含业务数据或模型凭据，不提交到 Git。部署到另一台电脑时必须通过安全方式单独复制。Docker 运行时，Compose 会将 LLM 配置只读挂载到容器中。
 
 下载后的标准数据保存在 `gateway_downloads/api_queries/`，主要列为：
 

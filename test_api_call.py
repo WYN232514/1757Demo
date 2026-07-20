@@ -91,6 +91,7 @@ def print_result(result: dict[str, Any]) -> None:
     download = result.get("download", {})
     analysis = result.get("analysis", {})
     work_orders = result.get("similar_work_orders", []) or []
+    report = result.get("fault_report", {}) or {}
 
     print("\n========== 调用成功 ==========")
     print("request_id：", result.get("request_id", ""))
@@ -132,6 +133,28 @@ def print_result(result: dict[str, Any]) -> None:
         description = str(work_order.get("long_description", "") or "").strip()
         if description:
             print(f"  工单描述：{description}")
+        structured = work_order.get("structured_info") or {}
+        if structured:
+            print(f"  故障现象：{structured.get('fault', '')}")
+            print(f"  涉及部件：{structured.get('component', '')}")
+            print(f"  原因判断：{structured.get('cause', '')}")
+            print(f"  采取动作：{structured.get('action', '')}")
+            print(f"  处理结果：{structured.get('result', '')}")
+
+    print("\n========== 故障维修参考报告 ==========")
+    if not report.get("available"):
+        print(report.get("reason", "报告不可用"))
+        return
+    print("推荐来源：", report.get("recommendation_source", ""))
+    for title, key in (
+        ("情势判断", "situation_assessment"),
+        ("建议排查步骤", "recommended_steps"),
+        ("重点参考", "document_focus"),
+        ("注意事项", "cautions"),
+    ):
+        print(f"\n{title}：")
+        for index, text in enumerate(report.get(key, []) or [], start=1):
+            print(f"  {index}. {text}")
 
 
 def parse_args() -> argparse.Namespace:

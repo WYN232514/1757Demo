@@ -25,11 +25,17 @@ from starlette.concurrency import run_in_threadpool
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
-from app_visualize import compute_query
+from app_visualize import (
+    FAULT_EXTRACTOR_DIR,
+    FAULT_REFERENCE_DATA,
+    build_fault_reference_report,
+    compute_query,
+    load_structured_work_order_records,
+)
 from gateway_download import download_fault_window, load_metrics
 
 
-API_VERSION = "1.1.0"
+API_VERSION = "1.2.0"
 METRICS_JSON = Path(os.getenv("GATEWAY_METRICS_JSON", ROOT / "gateway_metrics.json"))
 QUERY_ROOT = Path(os.getenv("GATEWAY_QUERY_ROOT", ROOT / "gateway_downloads" / "api_queries"))
 CASE_LIBRARY_DIR = Path(os.getenv("CASE_LIBRARY_DIR", ROOT / "case_library"))
@@ -116,6 +122,7 @@ def json_safe(value: Any) -> Any:
 def similar_work_orders(q: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     metadata = q["metadata"]
+    structured_records = load_structured_work_order_records()
     for rank, idx in enumerate(q["top_idx"], start=1):
         idx = int(idx)
         meta = metadata.iloc[idx]
@@ -125,14 +132,16 @@ def similar_work_orders(q: dict[str, Any]) -> list[dict[str, Any]]:
         except (TypeError, ValueError):
             car_no = str(car_no or "")
 
+        work_order_no = str(json_safe(meta.get("work_order_no", "")) or "")
         work_order = {
-            "work_order_no": str(json_safe(meta.get("work_order_no", "")) or ""),
+            "work_order_no": work_order_no,
             "case_id": str(json_safe(meta.get("case_id", "")) or ""),
             "train": str(json_safe(meta.get("train", "")) or ""),
             "car_no": car_no,
             "fault_time": json_safe(meta.get("fault_time_raw", "")),
             "remark": json_safe(meta.get("remark", "")),
             "long_description": json_safe(meta.get("long_description", "")),
+            "structured_info": structured_records.get(work_order_no),
         }
         rows.append(
             {
@@ -142,6 +151,40 @@ def similar_work_orders(q: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def fault_report(q: dict[str, Any]) -> dict[str, Any]:
+    """Build an LLM-backed report, with deterministic fallback on LLM failure."""
+    if not q.get("top_idx"):
+        return {
+            "available": False,
+            "reason": "没有达到相似度阈值的历史工单，无法生成参考报告。",
+        }
+    try:
+        details = build_fault_reference_report(q)
+    except Exception as exc:
+        return {
+            "available": False,
+            "reason": f"故障参考报告生成失败: {exc}",
+        }
+
+    cases = list(details.get("cases", []) or [])
+    narrative = dict(details.get("narrative", {}) or {})
+    return {
+        "available": bool(cases),
+        "recommendation_source": details.get(
+            "narrative_source", "deterministic_fallback"
+        ),
+        "reference_work_order_count": len(cases),
+        "missing_work_orders": list(details.get("missing_work_orders", []) or []),
+        "situation_assessment": list(
+            narrative.get("situation_assessment", []) or []
+        ),
+        "recommended_steps": list(narrative.get("recommended_steps", []) or []),
+        "document_focus": list(narrative.get("document_focus", []) or []),
+        "cautions": list(narrative.get("cautions", []) or []),
+        "synthesis_facts": dict(details.get("synthesis_facts", {}) or {}),
+    }
 
 
 def execute_fault_analysis(request: FaultAnalysisRequest) -> dict[str, Any]:
@@ -184,8 +227,10 @@ def execute_fault_analysis(request: FaultAnalysisRequest) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=q.get("message", "无法生成故障向量"))
 
     matches = similar_work_orders(q)
+    report = fault_report(q)
     return {
         "ok": True,
+        "version": API_VERSION,
         "request_id": request_id,
         "request": {
             "train": request.train,
@@ -211,6 +256,7 @@ def execute_fault_analysis(request: FaultAnalysisRequest) -> dict[str, Any]:
             "match_count": len(matches),
         },
         "similar_work_orders": matches,
+        "fault_report": report,
         "elapsed_seconds": round(time.perf_counter() - started, 3),
     }
 
@@ -246,10 +292,20 @@ def health() -> dict[str, Any]:
         os.getenv("RAILIVERSE_CLIENT_ID", "").strip()
         and os.getenv("RAILIVERSE_CLIENT_SECRET", "").strip()
     )
+    try:
+        structured_work_order_count = len(load_structured_work_order_records())
+    except Exception:
+        structured_work_order_count = 0
+    fault_report_reference_configured = FAULT_REFERENCE_DATA.is_file()
+    fault_report_llm_configured = (
+        FAULT_EXTRACTOR_DIR / "llm_api_config.json"
+    ).is_file()
     return {
         "status": "ok" if (
             not missing and metric_count > 0
             and gateway_endpoint_configured and gateway_credentials_configured
+            and structured_work_order_count > 0
+            and fault_report_reference_configured
         ) else "degraded",
         "version": API_VERSION,
         "case_library_dir": str(CASE_LIBRARY_DIR),
@@ -257,6 +313,9 @@ def health() -> dict[str, Any]:
         "metric_count": metric_count,
         "gateway_endpoint_configured": gateway_endpoint_configured,
         "gateway_credentials_configured": gateway_credentials_configured,
+        "structured_work_order_count": structured_work_order_count,
+        "fault_report_reference_configured": fault_report_reference_configured,
+        "fault_report_llm_configured": fault_report_llm_configured,
     }
 
 

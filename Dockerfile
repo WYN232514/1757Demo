@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements-api.txt
 
 COPY api_service.py app_visualize.py gateway_download.py vcb_case_library_direct.py ./
 COPY gateway_metrics.json ./
+COPY fault_extractor/fault_extractor ./fault_extractor/fault_extractor
 
 RUN mkdir -p /app/case_library /data/gateway_queries
 
