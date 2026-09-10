@@ -22,26 +22,11 @@ __pycache__/
 
 # Large or sensitive business data
 01_数据整理/
-gateway_downloads/
-backups/
-分析文件/
-case_library/*
-!case_library/.gitkeep
-fault_extractor/**/output/
 
 # Work orders, reports and generated data
-*.xls
-*.xlsx
-*.csv
-*.npz
-*.npy
-*.joblib
-*.zip
 *.rar
-*.png
-*.html
+~$*
 *.log
-raw_data_catalog.sqlite3*
 runtime/work_order_sync/
 runtime/historical_raw_cache/
 # Runtime contains browser profiles, API responses and machine-local test data.

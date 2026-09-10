@@ -1,0 +1,914 @@
+{
+  "5001544878": {
+    "fault": "P073 VCB tripped",
+    "evidence": "TMS shown P073 TMS VCB Trip Detected, then reset normal by T-cap. TMS ER was overwritten, checked TMS no repeat fault have occurred again up to now.",
+    "component": "VCB, APC, ATR",
+    "cause": "P073 transient VCB trip detection/control anomaly with no repeat fault found after reset (glm inferenced)",
+    "action": "checked, reset, ride checked, downloaded TMS log, function tested",
+    "result": "Function normal during ride check, tests passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "VCB trip detection/control circuit"
+    ],
+    "cause_events": [
+      "transient anomaly/no repeat after reset (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "APC",
+      "ATR"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001544878",
+    "equip_model": "R-Train",
+    "equip_instance": "T25",
+    "equip_unit": "P073",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001614276": {
+    "fault": "P026 VCB tripped repeatedly",
+    "evidence": "TMS show P026 TMS VCB Trip Detected and T-cap reset resume normal twice. TMS P026 no repeat VCB fault log after leaving LOW DT. Checked P026 related VCB circuit normal.",
+    "component": "VCB, APC controller, APC receiver, APCCR, RAMFR, VCBCR, ATR, APC",
+    "cause": "P026 intermittent VCB control abnormality involving APC controller, APC receiver, APCCR, RAMFR and VCBCR (glm inferenced)",
+    "action": "ride checked P026 VCB function was pass, checked P026 related VCB circuit normal, replaced APC controller, APC receiver, APCCR, RAMFR, VCBCR for testing, function tested P026 ATR, APC, VCB.",
+    "result": "Function test passed.",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "APC/ATR/VCB control chain"
+    ],
+    "cause_events": [
+      "intermittent VCB control abnormality (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB circuit",
+      "APC controller",
+      "APC receiver",
+      "APCCR",
+      "RAMFR",
+      "VCBCR",
+      "ATR",
+      "APC",
+      "VCB"
+    ],
+    "treatment_events": [
+      "checked",
+      "checked",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001614276",
+    "equip_model": "R-Train",
+    "equip_instance": "T9",
+    "equip_unit": "P026",
+    "replace_in_part": [
+      "260072075",
+      "260072027"
+    ],
+    "replace_out_part": [
+      "260072030",
+      "260072060"
+    ]
+  },
+  "5001587808": {
+    "fault": "P107 VCB tripped repeatedly",
+    "evidence": "TMS showed 'VCB Trip Detected' on 05.06.2026 05:49, 06.06.2026 05:30 and 05:40. ER showed ramping down finish signal abnormal trigger, not in neutral section. T-cap reset then normal.",
+    "component": "VCB, ATR controller, ATR receiver, APC, ATR",
+    "cause": "ramping-down finish signal abnormal trigger outside neutral section",
+    "action": "checked VCB, replaced ATR controller, replaced ATR receiver, function tested APC, function tested ATR, function tested VCB",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "VCB ramping-down finish signal circuit"
+    ],
+    "cause_events": [
+      "abnormal trigger"
+    ],
+    "treatment_components": [
+      "VCB",
+      "ATR controller",
+      "ATR receiver",
+      "APC",
+      "ATR",
+      "VCB"
+    ],
+    "treatment_events": [
+      "checked",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001587808",
+    "equip_model": "R-Train",
+    "equip_instance": "T36",
+    "equip_unit": "P107",
+    "replace_in_part": [
+      "260072052",
+      "29454-0067"
+    ],
+    "replace_out_part": [
+      "260072111",
+      "260672083"
+    ]
+  },
+  "5001505634": {
+    "fault": "P003 VCB tripped and failed to close",
+    "evidence": "TMS show P003 VCB trip detected and M003 C/I fault and C/I(GD) Ground fault. P003 VCB trip due to M003 VCC CI Fault Detected can't reset & C/I (GD) Ground Fault on 18:55:56hrs 18/5/26 but 1sec auto clear. Follow up. M003 CI power unit U & V replaced. P003 VCB can't close, after isolated M003 C/I then P003 VCB resumed normal, found M003 C/I Inverter VCBTR not closed. M003 C/I (CIGBTD)Converter IGBT Module Fault. Found M003 C/I input voltage abnormally low (~400Vac) & found P003 Main Tx. terminal wire 21H13 burnt. transformer cable lug burnt. follow up. Follow up.",
+    "component": "VCB, C/I, C/I inverter, converter IGBT module, main transformer terminal wire, main transformer cable lug, C/I converter, C/I GCU, ATR, APC, OVT unit, HTJB jumper, pantograph, main transformer",
+    "cause": "P003 Main Tx. terminal wire 21H13 burnt and transformer cable lug burnt",
+    "action": "VCB reset normal &CI isolated by T-cap and then ride checked VCB function normal(ATF)2)FA Checked M003 C/I Converter & Inverter IGBT, all traction motor & connection plug normal and megger test was passed. Replaced M003 GCU (IN: DR30176) for testing, tested ATR, APC, VCB function was passed but test run in depot TMS shown M003 VCC CI Fault Detected, C/I (VDLVD1)Low Voltage of Filter Capacitor 1, C/I (VDLVD2)Low Voltage of Filter Capacitor 2, C/I (FCD)Charging Circuit Fault, C/I (FCD2)Charging Circuit Fault can't reset & swapped OVT unit with F002 but still the faulty and resumed. The M003 C/I Converter unit replacement is required. carry out CI status inspection and check fault log on TMS is required. Replaced M003 GCU complete set but fault still. Request M003 C/I Inverter power unit replacement. replaced C/I converter & inverter power unit on M003, carry out status inspection and check fault log on TMS screen. Checked P003 to M003 HTJB X3 X4 jumper condition normal. Isolated P003 pantograph, awaiting for follow up by W/S. Repair main transformer cable lug. perform inspection of P003 main transformer cable and replace cable lug the carry out the equipment status inspection, the fault log checking of main transformer, the converter/inverter on TMS screen and the depot running test.(ATF) 10)FC Checked TMS R003 TMS main transformer, C/I status condition normal, depot test run was passed.",
+    "result": "Depot test run passed",
+    "phenomenon_component": [
+      "VCB",
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped",
+      "failed to close"
+    ],
+    "cause_components": [
+      "main transformer terminal wire",
+      "main transformer cable lug"
+    ],
+    "cause_events": [
+      "burnt",
+      "burnt"
+    ],
+    "treatment_components": [
+      "VCB",
+      "C/I",
+      "VCB",
+      "C/I",
+      "VCB",
+      "C/I converter",
+      "C/I GCU",
+      "ATR",
+      "APC",
+      "VCB",
+      "C/I",
+      "OVT unit",
+      "C/I converter",
+      "C/I",
+      "C/I inverter",
+      "HTJB jumper",
+      "pantograph",
+      "main transformer cable lug",
+      "main transformer",
+      "main transformer",
+      "main transformer cable lug",
+      "main transformer cable lug"
+    ],
+    "treatment_events": [
+      "reset",
+      "reset",
+      "isolated",
+      "isolated",
+      "checked",
+      "checked",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested",
+      "function tested",
+      "swapped",
+      "replaced",
+      "checked",
+      "replaced",
+      "checked",
+      "isolated",
+      "repaired",
+      "repaired",
+      "checked",
+      "replaced",
+      "checked"
+    ],
+    "work_order": "5001505634",
+    "equip_model": "R-Train",
+    "equip_instance": "T1",
+    "equip_unit": "P003",
+    "replace_in_part": [
+      "DR30176"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001453818": {
+    "fault": "P045 VCB tripped repeatedly",
+    "evidence": "P045 VCB tripped. ER log P045 VCB reopen after N/S at 0845 & 0856, car 3 CI/APC command detection abnormal high in the same time. Suspect M045 CI GCU failure.",
+    "component": "VCB, C/I, APC, C/I GCU, ATR",
+    "cause": "M045 CI GCU failure (Suspected)",
+    "action": "reset, checked, replaced, function tested",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "M045 C/I GCU"
+    ],
+    "cause_events": [
+      "failure (Suspected)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "C/I GCU",
+      "ATR",
+      "APC",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001453818",
+    "equip_model": "R-Train",
+    "equip_instance": "T15",
+    "equip_unit": "M045",
+    "replace_in_part": [
+      "DJ07217"
+    ],
+    "replace_out_part": [
+      "DJ07128"
+    ]
+  },
+  "5001406566": {
+    "fault": "P045 VCB tripped repeatedly",
+    "evidence": "TMS shown P045 VCB Trip Detected and reset normal by T-Cap. NFF in depot. ER related P045 passed. VCB open due to ramping down finish signal abnormal trigger on 24/4 06:49hrs, 2/5 21:01hrs, 3/5 17:59 & 23:59hrs.",
+    "component": "VCB, ATR receiver, VCBSTR, VCBCTR, VDOS, ATR, APC",
+    "cause": "ramping-down finish signal abnormal trigger",
+    "action": "checked, replaced, swapped, function tested",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "VCB ramping-down finish signal circuit"
+    ],
+    "cause_events": [
+      "abnormal trigger"
+    ],
+    "treatment_components": [
+      "VCB",
+      "ATR receiver",
+      "VCBSTR",
+      "VCBCTR",
+      "VDOS",
+      "VCB",
+      "ATR",
+      "APC"
+    ],
+    "treatment_events": [
+      "checked",
+      "replaced",
+      "replaced",
+      "replaced",
+      "swapped",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001406566",
+    "equip_model": "R-Train",
+    "equip_instance": "T15",
+    "equip_unit": "P045",
+    "replace_in_part": [
+      "260072060",
+      "041523-160178",
+      "041523-160097"
+    ],
+    "replace_out_part": [
+      "041523-160171",
+      "041523-160103",
+      "260072009"
+    ]
+  },
+  "5001505712": {
+    "fault": "P073 VCB tripped",
+    "evidence": "P073 VCB trip detected. TMS ER shown P073 ramping down finish signal abnormal trigger, not in neutral section and VCB trip open.",
+    "component": "VCB, ATR receiver, ATR, APC",
+    "cause": "ramping-down finish signal abnormal trigger outside neutral section",
+    "action": "reset normal by T-cap and then ride checked VCB function normal(ATF) 2)FC Checked P073 related VCB circuit normal, replaced ATR receiver for testing. Function test of ATR, APC and VCB was passed.",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "VCB ramping-down finish signal circuit"
+    ],
+    "cause_events": [
+      "abnormal trigger"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "ATR receiver",
+      "ATR",
+      "APC",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001505712",
+    "equip_model": "R-Train",
+    "equip_instance": "T25",
+    "equip_unit": "P073",
+    "replace_in_part": [
+      "29454-0060"
+    ],
+    "replace_out_part": [
+      "26007-2025"
+    ]
+  },
+  "5001504492": {
+    "fault": "P055 VCB tripped",
+    "evidence": "P055 VCB trip detected once. TMS no repeat VCB trip fault log.",
+    "component": "VCB, ATR, APC",
+    "cause": "P055 transient VCB trip detection/control anomaly with no repeat fault found after reset (glm inferenced)",
+    "action": "ride check P055 VCB function was passed. Checked P055 related VCB circuit normal, function test of ATR, APC, VCB was passed.",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "VCB trip detection/control circuit"
+    ],
+    "cause_events": [
+      "transient anomaly/no repeat after reset (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "ATR",
+      "APC"
+    ],
+    "treatment_events": [
+      "checked",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001504492",
+    "equip_model": "R-Train",
+    "equip_instance": "T19",
+    "equip_unit": "P055",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001468561": {
+    "fault": "P045 VCB tripped repeatedly",
+    "evidence": "TMS show P045 TMS VCB Trip Detected at EXC to HUH UT on 9/5/26 18:47hrs (repeat on 22:53) (R=3). T-cap reset resume normal. Ride checked P045 VCB function normal.",
+    "component": "VCB, ATR, APC",
+    "cause": "P045 intermittent VCB trip/control anomaly (glm inferenced)",
+    "action": "reset, checked, replaced, function tested",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "VCB trip/control circuit"
+    ],
+    "cause_events": [
+      "intermittent trip/control anomaly (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "VCB",
+      "ATR",
+      "APC"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001468561",
+    "equip_model": "R-Train",
+    "equip_instance": "T15",
+    "equip_unit": "P045",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001215136": {
+    "fault": "P049 VCB tripped",
+    "evidence": "TMS show VCB trip detected. TMS fault log show P049 VCB open at 05:35:34hr & reset by T-cap. Ramping down finish signal not received at 05:43:05hr.",
+    "component": "VCB, ATR controller, APC",
+    "cause": "P049 intermittent VCB control abnormality involving ATR controller (glm inferenced)",
+    "action": "reset normal by T-cap and then ride checked VCB function normal(ATF) 2)FC Replaced P049 ATR controller for testing, tested VCB & APC function was passed.",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "APC/ATR/VCB control chain"
+    ],
+    "cause_events": [
+      "intermittent VCB control abnormality (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "ATR controller",
+      "VCB",
+      "APC"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001215136",
+    "equip_model": "R-Train",
+    "equip_instance": "T17",
+    "equip_unit": "P049",
+    "replace_in_part": [
+      "38022-0201"
+    ],
+    "replace_out_part": [
+      "38022-0006"
+    ]
+  },
+  "5001450157": {
+    "fault": "P045 VCB tripped",
+    "evidence": "P045 VCB tripped. NFF in depot. ER related P045 passed. VCB normal open & close after about 6sec. VCB open due to ramping down finish signal abnormal trigger on 5/5 09:17hrs.",
+    "component": "VCB, APC receiver, APC controller, ATR controller, APC, ATR",
+    "cause": "ramping-down finish signal abnormal trigger",
+    "action": "reset, checked, replaced, function tested",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "VCB ramping-down finish signal circuit"
+    ],
+    "cause_events": [
+      "abnormal trigger"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "APC receiver",
+      "APC controller",
+      "ATR controller",
+      "APC",
+      "ATR",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001450157",
+    "equip_model": "R-Train",
+    "equip_instance": "T15",
+    "equip_unit": "P045",
+    "replace_in_part": [
+      "29450020",
+      "260072035",
+      "260072077"
+    ],
+    "replace_out_part": [
+      "260072043",
+      "260072049"
+    ]
+  },
+  "5001449874": {
+    "fault": "P068 VCB tripped and failed to close",
+    "evidence": "T-cap reset then normal. TMS ER log show P068 VCB have not close since T-cap switch on the train for train preparation.",
+    "component": "VCB, PADR, PDR, EPDR, ACOR, MTTHR, PUR",
+    "cause": "P068 intermittent close-control abnormality involving PADR, PDR, EPDR, ACOR, MTTHR and PUR (glm inferenced)",
+    "action": "Train return depot. (ATF) 2)FB. According to the fault symptom, replaced P068 PADR,PDR,EPDR,ACOR,MTTHR & PUR for testing. Tested P068 VCB function passed & Keep monitoring.",
+    "result": "Function test passed; kept under monitoring",
+    "phenomenon_component": [
+      "VCB",
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped",
+      "failed to close"
+    ],
+    "cause_components": [
+      "VCB close-control relay/power-supply chain"
+    ],
+    "cause_events": [
+      "intermittent close-control abnormality (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "PADR",
+      "PDR",
+      "EPDR",
+      "ACOR",
+      "MTTHR",
+      "PUR",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "function tested"
+    ],
+    "work_order": "5001449874",
+    "equip_model": "R-Train",
+    "equip_instance": "T23",
+    "equip_unit": "P068",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001331067": {
+    "fault": "P073 VCB tripped repeatedly",
+    "evidence": "TMS show P073 TMS VCB Trip Detected. T-cap reset resume normal. D073 & M073 C/I 9VSLVD Low voltage of primary circuit. NFF in depot. ER related P073 VCB open due to ramping down finish signal abnormal trigger. P073 ramping down finish signal trigger but VCB can't open after passed N/S.",
+    "component": "VCB, C/I, VCBHR, VCBCR, RAMFR, APCCR, VCBSTR, VCBCTR, ATR controller, APC controller, ATR receiver, APC receiver, ATR, APC",
+    "cause": "D073 and M073 C/I low voltage of primary circuit; ramping-down finish signal abnormal trigger; ramping-down finish signal trigger with failed VCB open sequence",
+    "action": "checked, reset, function tested, replaced",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "C/I",
+      "VCB ramping-down finish signal circuit",
+      "VCB ramping-down finish signal circuit"
+    ],
+    "cause_events": [
+      "low voltage of primary circuit",
+      "abnormal trigger",
+      "abnormal trigger/failed VCB open sequence"
+    ],
+    "treatment_components": [
+      "VCB",
+      "C/I",
+      "VCBHR",
+      "VCBCR",
+      "RAMFR",
+      "APCCR",
+      "VCBSTR",
+      "VCBCTR",
+      "ATR controller",
+      "APC controller",
+      "ATR receiver",
+      "APC receiver",
+      "VCB",
+      "ATR",
+      "APC"
+    ],
+    "treatment_events": [
+      "checked",
+      "checked",
+      "function tested",
+      "function tested",
+      "function tested",
+      "function tested",
+      "function tested",
+      "function tested",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001331067",
+    "equip_model": "R-Train",
+    "equip_instance": "T25",
+    "equip_unit": "D073",
+    "replace_in_part": [
+      "260072078",
+      "260072039",
+      "260072025",
+      "29455-0018"
+    ],
+    "replace_out_part": [
+      "260072100",
+      "260072075",
+      "29455-0002"
+    ]
+  },
+  "5001293500": {
+    "fault": "P031 VCB tripped",
+    "evidence": "TMS show P031 TMS VCB Trip Detected and T-cap reset resume normal. TMS ER shown P031 VCB abnormal trip at SHS to LMC UT. (Ref. WO: 5001284125 fault record shown all P031 VCB abnormal trip at SHS to LMC UT.)",
+    "component": "VCB, APC controller, APC receiver, ATR, APC",
+    "cause": "P031 intermittent VCB control abnormality involving APC controller and APC receiver (glm inferenced)",
+    "action": "ride checked VCB function was pass.(ATF) 2)FD Checked P031 related circuit normal, replaced APC controller, APC receiver for testing. Function test of ATR, APC and VCB was passed.",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "APC/ATR/VCB control chain"
+    ],
+    "cause_events": [
+      "intermittent VCB control abnormality (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "APC controller",
+      "APC receiver",
+      "ATR",
+      "APC",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001293500",
+    "equip_model": "R-Train",
+    "equip_instance": "T11",
+    "equip_unit": "P031",
+    "replace_in_part": [
+      "260072022",
+      "29455-0067"
+    ],
+    "replace_out_part": [
+      "260072035",
+      "260072042"
+    ]
+  },
+  "5001340533": {
+    "fault": "P073 VCB tripped",
+    "evidence": "TMS show P073 TMS VCB Trip Detected and auto reset normal. TMS fault log show D073 & M073 \"C/I (VSLVD)Low Voltage of Primary Circuit\" at same times during passing N/S, then P073 VCB tripped open after ~5mins with abnormal Ramping down finish signal.",
+    "component": "VCB, C/I, VDOS, VCBSTR, APC, ATR",
+    "cause": "D073 and M073 C/I low voltage of primary circuit",
+    "action": "checked P073 VCB function was pass, replaced P073 CC1 & CC2 VDOS cards & VCBSTR relay, tested P073 VCB, APC & ATR function passed.",
+    "result": "Function test passed; kept under monitoring",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "C/I"
+    ],
+    "cause_events": [
+      "low voltage of primary circuit"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VDOS",
+      "VCBSTR",
+      "VCB",
+      "APC",
+      "ATR"
+    ],
+    "treatment_events": [
+      "checked",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001340533",
+    "equip_model": "R-Train",
+    "equip_instance": "T25",
+    "equip_unit": "D073",
+    "replace_in_part": [
+      "041523-170017",
+      "041523-1800129"
+    ],
+    "replace_out_part": [
+      "041522-140164",
+      "041523-170002"
+    ]
+  },
+  "5001282623": {
+    "fault": "P013 VCB tripped",
+    "evidence": "T-cap reset normal. TMS no related fault code recently.",
+    "component": "VCB, APC, ATR",
+    "cause": "P013 intermittent VCB trip/control anomaly (glm inferenced)",
+    "action": "checked, function tested",
+    "result": "Function test passed; kept under monitoring.",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "VCB trip/control circuit"
+    ],
+    "cause_events": [
+      "intermittent trip/control anomaly (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "APC",
+      "ATR"
+    ],
+    "treatment_events": [
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001282623",
+    "equip_model": "R-Train",
+    "equip_instance": "T5",
+    "equip_unit": "P013",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001284125": {
+    "fault": "P031 VCB tripped repeatedly",
+    "evidence": "TMS show P031 TMS VCB Trip Detected and T-cap reset resume normal. ER show P031 VCB abnormal open few times.",
+    "component": "VCB, EPDR, PDR, RAMFR, APCCR, VCBCR, ATR, APC",
+    "cause": "P031 intermittent close-control abnormality involving EPDR, PDR, RAMFR, APCCR and VCBCR (glm inferenced)",
+    "action": "ride checked P031 VCB function was pass.(ATF) 4)FC Checked P031 related VCB circuit normal, replaced EPDR, PDR, RAMFR, APCCR, VCBCR for testing. Function test of ATR, APC and VCB was passed.",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped repeatedly"
+    ],
+    "cause_components": [
+      "VCB close-control relay/power-supply chain"
+    ],
+    "cause_events": [
+      "intermittent close-control abnormality (glm inferenced)"
+    ],
+    "treatment_components": [
+      "VCB",
+      "VCB",
+      "EPDR",
+      "PDR",
+      "RAMFR",
+      "APCCR",
+      "VCBCR",
+      "ATR",
+      "APC",
+      "VCB"
+    ],
+    "treatment_events": [
+      "reset",
+      "checked",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "replaced",
+      "function tested",
+      "function tested",
+      "function tested"
+    ],
+    "work_order": "5001284125",
+    "equip_model": "R-Train",
+    "equip_instance": "T11",
+    "equip_unit": "P031",
+    "replace_in_part": [
+      "N/A"
+    ],
+    "replace_out_part": [
+      "N/A"
+    ]
+  },
+  "5001204390": {
+    "fault": "P106 VCB tripped",
+    "evidence": "TMS show P106 VCB trip detected and T-cap reset resume normal. TMS ER show P106 'APC Available' high bit about 4sec when train preparation.",
+    "component": "VCB, APC, ATR, APC controller, ATR controller",
+    "cause": "APC Available high-bit abnormality during train preparation",
+    "action": "checked VCB function, replaced P106 ATR, replaced APC controller, function tested ATR, function tested APC, function tested VCB",
+    "result": "Function test passed",
+    "phenomenon_component": [
+      "VCB"
+    ],
+    "phenomenon_events": [
+      "tripped"
+    ],
+    "cause_components": [
+      "APC Available signal circuit"
+    ],
+    "cause_events": [
+      "high bit abnormal"
+    ],
+    "treatment_components": [
+      "VCB",
+      "ATR",
+      "APC controller"
+    ],
+    "treatment_events": [
+      "checked",
+      "replaced",
+      "replaced"
+    ],
+    "work_order": "5001204390",
+    "equip_model": "R-Train",
+    "equip_instance": "T36",
+    "equip_unit": "P106",
+    "replace_in_part": [
+      "260072089",
+      "38002-0017"
+    ],
+    "replace_out_part": [
+      "38022-0022",
+      "260072042"
+    ]
+  }
+}

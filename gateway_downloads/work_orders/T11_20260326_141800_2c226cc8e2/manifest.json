@@ -1,0 +1,15 @@
+{
+  "train": "T11",
+  "fault_time": "2026-03-26 22:48:00",
+  "time_is_cst": true,
+  "start_utc": "2026-03-26 14:18:00",
+  "end_utc": "2026-03-26 15:18:00",
+  "before_min": 30,
+  "after_min": 30,
+  "metric_count": 109,
+  "fault_code": "P031",
+  "row_count": 655428,
+  "files": [
+    "2026-03-26.csv"
+  ]
+}

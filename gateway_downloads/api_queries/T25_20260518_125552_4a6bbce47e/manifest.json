@@ -1,0 +1,15 @@
+{
+  "train": "T25",
+  "fault_time": "2026-05-18 21:25:52",
+  "time_is_cst": true,
+  "start_utc": "2026-05-18 12:55:52",
+  "end_utc": "2026-05-18 13:55:52",
+  "before_min": 30,
+  "after_min": 30,
+  "metric_count": 109,
+  "fault_code": "1757",
+  "row_count": 682225,
+  "files": [
+    "2026-05-18.csv"
+  ]
+}

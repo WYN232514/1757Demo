@@ -339,3 +339,20 @@ sudo docker compose -f docker-compose.frontend.yml restart frontend
 ```
 
 同步状态、失败重试队列和原始工作流响应保存在 `runtime/work_order_sync/`。查询使用一天重叠窗口，但已成功且内容未变化的工单不会重复建库；失败项会在下次任务自动重试。更新过程中前端继续使用旧案例库，只有完整链路成功后才重新加载。
+
+## 在另一台电脑完整恢复
+
+仓库中的表格、案例库、下载缓存、分析结果、知识图谱和截图由 Git LFS 管理。Windows 新电脑先安装 Git 与 Git LFS，然后执行：
+
+```powershell
+git clone https://github.com/WYN232514/1757Demo.git
+cd 1757Demo
+git lfs install
+git lfs pull
+.\restore_portable_data.ps1
+Copy-Item .env.example .env
+```
+
+`restore_portable_data.ps1` 会把 `01_data_portable.tar.gz` 还原为 `01_数据整理/`。随后通过安全渠道把原电脑的真实配置填入 `.env`，再按本文的 Docker 或 Windows 原生方式启动。
+
+以下敏感文件不会进入 GitHub，即使仓库为私有也必须单独安全迁移：`.env`、`.env.auth`、`server.env.backup`、`config.yaml`、`llm_api_config.json` 和私钥文件。

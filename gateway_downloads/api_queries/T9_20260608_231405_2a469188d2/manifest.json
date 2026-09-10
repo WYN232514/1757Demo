@@ -1,0 +1,15 @@
+{
+  "train": "T9",
+  "fault_time": "2026-06-09 07:34:05",
+  "time_is_cst": true,
+  "start_utc": "2026-06-08 23:14:05",
+  "end_utc": "2026-06-08 23:54:05",
+  "before_min": 20,
+  "after_min": 20,
+  "metric_count": 109,
+  "fault_code": "1757",
+  "row_count": 429324,
+  "files": [
+    "2026-06-09.csv"
+  ]
+}

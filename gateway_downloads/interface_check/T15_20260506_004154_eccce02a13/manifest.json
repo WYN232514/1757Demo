@@ -1,0 +1,23 @@
+{
+  "train": "T15",
+  "fault_time": "2026-05-06 08:46:54",
+  "time_is_cst": true,
+  "start_utc": "2026-05-06 00:41:54",
+  "end_utc": "2026-05-06 00:49:54",
+  "before_min": 5,
+  "after_min": 3,
+  "metric_count": 6,
+  "metric_codes": [
+    "904_2_1_02_sd",
+    "911_3_1_02_sd",
+    "911_5_1_02_sd",
+    "936_2_1_02_sd",
+    "943_3_1_02_sd",
+    "943_5_1_02_sd"
+  ],
+  "fault_code": "1757",
+  "row_count": 1386,
+  "files": [
+    "2026-05-06.csv"
+  ]
+}
