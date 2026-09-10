@@ -631,10 +631,22 @@ def compute_query(
         }
 
     node_counts = result["node_counts"]
-    query_vec, unknown_nodes = vectorize_node_counts(node_counts, node_index)
-    query_vec = apply_similarity_exclusions(query_vec, node_index)
+    query_vec_before_exclusions, unknown_nodes = vectorize_node_counts(
+        node_counts, node_index
+    )
+    query_vec = apply_similarity_exclusions(query_vec_before_exclusions, node_index)
     if np.linalg.norm(query_vec) == 0:
-        return {"ok": False, "message": "新故障的节点都不在历史 node_index 中，无法相似度检索。"}
+        if np.linalg.norm(query_vec_before_exclusions) > 0:
+            message = (
+                "已检测到信号变化，但这些变化仅包含不参与相似度计算的 "
+                "VCB/RF 核心锚点；排除后没有剩余有效特征，无法进行相似度检索。"
+            )
+        else:
+            message = (
+                "已提取到故障 segment，但没有生成可用于相似度计算的有效节点，"
+                "无法进行相似度检索。"
+            )
+        return {"ok": False, "message": message}
 
     new_seg = result.get("main_segment")
 
