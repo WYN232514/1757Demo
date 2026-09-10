@@ -1,0 +1,408 @@
+/*
+ * Viewport-responsive overrides.
+ * Loaded after app_theme.css and dashboard.css by Dash's alphabetical asset order.
+ */
+
+:root {
+    --responsive-page-pad-x: clamp(8px, .85vw, 16px);
+    --responsive-page-pad-top: clamp(8px, 1.25vh, 14px);
+    --responsive-page-pad-bottom: clamp(7px, 1vh, 10px);
+    --responsive-header-height: clamp(54px, 7.4vh, 64px);
+    --dashboard-gap: clamp(6px, .55vw, 10px);
+}
+
+html,
+body,
+#react-entry-point,
+#_dash-app-content {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+body {
+    min-width: 320px;
+    overflow: hidden;
+}
+
+.app-shell {
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: var(--responsive-page-pad-top) var(--responsive-page-pad-x) var(--responsive-page-pad-bottom);
+    grid-template-rows: var(--responsive-header-height) minmax(0, 1fr);
+    gap: var(--dashboard-gap);
+}
+
+.command-header {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1.15fr) minmax(0, 1fr);
+    gap: clamp(6px, .65vw, 12px);
+}
+
+.command-header > *,
+.header-live-info,
+.header-query-values,
+.command-header-center {
+    min-width: 0;
+}
+
+.command-header-center {
+    padding-inline: clamp(18px, 2.5vw, 48px);
+}
+
+.app-title {
+    font-size: clamp(20px, 1.55vw, 29px);
+    letter-spacing: clamp(.7px, .09vw, 1.6px);
+    white-space: nowrap;
+}
+
+.app-subtitle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#main_page,
+.main-results-shell,
+.dashboard-main,
+.top-results-layout,
+.dashboard-right-stack {
+    min-width: 0;
+    min-height: 0;
+}
+
+.dashboard-main,
+.top-results-layout {
+    grid-template-columns: minmax(0, 23fr) minmax(0, 48fr) minmax(0, 29fr);
+}
+
+.work-order-panel,
+.diagnosis-panel,
+.replacement-dashboard-card,
+.graph-panel {
+    min-width: 0;
+    min-height: 0;
+}
+
+.fault-report-panel,
+.replacement-dashboard-card .replacement-info-panel,
+.knowledge-graph-direct-shell {
+    overscroll-behavior: contain;
+}
+
+/* Standard laptops and compact desktop windows: keep the one-screen layout. */
+@media (max-width: 1499px) and (min-width: 1180px) {
+    .command-header {
+        grid-template-columns: minmax(230px, 1fr) minmax(390px, 1.12fr) minmax(230px, 1fr);
+    }
+
+    .header-live-info {
+        gap: 7px;
+        font-size: 10px;
+    }
+
+    .header-live-info-left { padding-left: 8px; }
+    .header-live-info-right { padding-right: 8px; }
+
+    .dashboard-main,
+    .top-results-layout {
+        grid-template-columns: minmax(0, 24fr) minmax(0, 46fr) minmax(0, 30fr);
+    }
+
+    .work-order-panel,
+    .diagnosis-panel {
+        padding: clamp(10px, 1vw, 14px) clamp(9px, .9vw, 13px);
+    }
+
+    .work-order-summary {
+        grid-template-columns: minmax(0, 1.08fr) minmax(92px, .92fr);
+    }
+
+    .structured-info-grid {
+        gap: 6px;
+    }
+
+    .structured-field {
+        padding-inline: 8px;
+    }
+
+    .replacement-record {
+        grid-template-columns: 23px minmax(0, 1fr);
+    }
+
+    .replacement-record-source {
+        display: none;
+    }
+}
+
+/* Short screens (typical 1366x768 laptop after browser chrome). */
+@media (max-height: 820px) and (min-width: 1180px) {
+    :root {
+        --responsive-page-pad-top: 7px;
+        --responsive-page-pad-bottom: 6px;
+        --responsive-header-height: 52px;
+        --dashboard-gap: 6px;
+    }
+
+    .command-header-center {
+        padding-block: 2px 4px;
+    }
+
+    .command-header-center::before {
+        bottom: -5px;
+    }
+
+    .app-title { font-size: clamp(19px, 1.45vw, 25px); }
+    .app-subtitle { margin-top: 2px; font-size: 8px; }
+    .query-drawer > summary { height: 29px; }
+
+    .graph-panel {
+        grid-template-rows: 60px minmax(0, 1fr);
+    }
+
+    .process-navigation {
+        height: 60px;
+        padding-inline: 7px;
+    }
+
+    .process-step { gap: 4px; }
+    .process-step b { width: 25px; height: 25px; }
+    .process-step span { font-size: 10px; }
+    .process-step small { font-size: 7px; }
+
+    .section-title {
+        margin-bottom: 7px;
+        font-size: 15px;
+    }
+
+    .work-order-summary { min-height: 78px; }
+    .structured-info-block { margin-top: 7px; }
+    .structured-info-grid { gap: 4px; }
+    .structured-field { padding-block: 6px; }
+    .signal-summary-block { margin-top: 7px; }
+
+    .dashboard-right-stack {
+        grid-template-rows: minmax(132px, 21fr) minmax(0, 79fr);
+    }
+
+    .replacement-dashboard-card {
+        padding: 9px 9px 7px;
+    }
+
+    .replacement-record {
+        padding-block: 4px;
+    }
+
+    .diagnosis-panel,
+    .work-order-panel {
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+    }
+
+    .dashboard-footer {
+        padding-inline: 10px;
+        font-size: 8.5px;
+    }
+}
+
+/* Tablet/small window: use two columns and natural page scrolling. */
+@media (max-width: 1179px) {
+    html,
+    body,
+    #react-entry-point,
+    #_dash-app-content {
+        min-width: 0;
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .app-shell {
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        grid-template-rows: auto auto;
+        overflow: visible;
+    }
+
+    .command-header {
+        height: auto;
+        min-height: 58px;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 1.25fr) minmax(0, 1fr);
+    }
+
+    .header-live-info {
+        font-size: 9px;
+    }
+
+    #main_page,
+    .main-results-shell,
+    .dashboard-main,
+    .top-results-layout {
+        height: auto;
+        overflow: visible;
+    }
+
+    .main-results-shell {
+        grid-template-rows: auto 42px;
+    }
+
+    .dashboard-main,
+    .top-results-layout {
+        grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr);
+        align-items: stretch;
+    }
+
+    .work-order-panel,
+    .graph-panel {
+        min-height: min(660px, 78vh);
+    }
+
+    .dashboard-right-stack {
+        grid-column: 1 / -1;
+        min-height: 500px;
+        grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
+        grid-template-rows: minmax(0, 1fr);
+    }
+
+    .diagnosis-panel,
+    .replacement-dashboard-card {
+        min-height: 500px;
+    }
+
+    .work-order-panel,
+    .diagnosis-panel {
+        overflow-y: auto;
+    }
+}
+
+/* Phones and very narrow windows: one readable column. */
+@media (max-width: 760px) {
+    :root {
+        --responsive-page-pad-x: 7px;
+        --responsive-page-pad-top: 7px;
+        --responsive-page-pad-bottom: 7px;
+        --dashboard-gap: 7px;
+    }
+
+    .command-header {
+        min-height: 54px;
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+    }
+
+    .command-header-center {
+        padding-inline: 4px;
+    }
+
+    .app-title {
+        font-size: clamp(16px, 5.1vw, 22px);
+        letter-spacing: .35px;
+    }
+
+    .app-subtitle,
+    .header-live-info .header-info-label,
+    .header-query-values,
+    .system-state strong {
+        display: none;
+    }
+
+    .header-live-info-left,
+    .header-live-info-right {
+        padding: 0;
+        justify-content: center;
+    }
+
+    .query-drawer > summary {
+        width: 38px;
+        min-width: 38px;
+        padding: 0;
+        font-size: 0;
+    }
+
+    .query-drawer-icon {
+        margin: 0;
+        font-size: 15px;
+    }
+
+    .dashboard-main,
+    .top-results-layout,
+    .dashboard-right-stack {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto;
+    }
+
+    .work-order-panel,
+    .graph-panel,
+    .diagnosis-panel,
+    .replacement-dashboard-card {
+        min-height: 520px;
+    }
+
+    .dashboard-right-stack {
+        min-height: 0;
+    }
+
+    .replacement-dashboard-card {
+        min-height: 260px;
+    }
+
+    .dashboard-footer {
+        grid-template-columns: 1fr;
+        min-height: 42px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    .dashboard-footer span:not(:nth-child(2)) {
+        display: none;
+    }
+
+    .dashboard-footer span:nth-child(2) {
+        text-align: center;
+    }
+
+    .app-shell > .control-panel {
+        width: min(360px, calc(100vw - 36px));
+    }
+
+    .dashboard-drawer-close {
+        left: min(310px, calc(100vw - 50px));
+    }
+}
+
+@media (max-width: 460px) {
+    .work-order-summary,
+    .structured-info-grid,
+    .report-stats {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .structured-field,
+    .structured-field-wide {
+        grid-column: auto;
+    }
+
+    .signal-summary-heading {
+        align-items: stretch;
+    }
+
+    .signal-summary-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    body { overflow-y: auto; }
+    .app-shell { height: auto; min-height: 100dvh; overflow: visible; }
+    #main_page, .main-results-shell, .dashboard-main { height: auto; overflow: visible; }
+    .dashboard-main, .top-results-layout { min-height: 560px; }
+}
