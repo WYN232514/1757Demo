@@ -1,0 +1,62 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: vcb-1757-frontend:latest
+    container_name: vcb-1757-frontend
+    restart: unless-stopped
+    ports:
+      - "8050:8050"
+    env_file:
+      - .env
+      - .env.auth
+    environment:
+      GATEWAY_QUERY_ROOT: /runtime/gateway_downloads/api_queries
+      HISTORICAL_RAW_CACHE_DIR: /runtime/historical_raw_cache
+      RAW_DATA_CATALOG_PATH: /runtime/raw_data_catalog.sqlite3
+      WORK_ORDER_SYNC_RUNTIME: /runtime/work_order_sync
+      DASH_REQUESTS_PATHNAME_PREFIX: /mtr-1757/
+      FAULT_AI_COOKIE_SECURE: "true"
+      GATEWAY_BEFORE_MIN: "1"
+      GATEWAY_AFTER_MIN: "0.5"
+      GATEWAY_BATCH_SIZE: ${GATEWAY_BATCH_SIZE:-10}
+      GATEWAY_DOWNLOAD_WORKERS: ${GATEWAY_DOWNLOAD_WORKERS:-6}
+      ICEBERG_RAW_ENABLED: "true"
+      AWS_REGION: ap-east-1
+      ICEBERG_WAREHOUSE: s3://mtr-inf-backup/R-Train/iceberg/fault_related_data
+      ICEBERG_DB: iceberg_db
+      ICEBERG_TABLE: fault_related_data
+      HISTORICAL_EVENT_CODE: "1757"
+      ICEBERG_QUERY_RETRIES: "2"
+      CASE_LIBRARY_BACKEND: qdrant
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-vcb_case_library_v2}
+    volumes:
+      - ./runtime:/runtime
+      - ./fault_extractor/fault_extractor/llm_api_config.json:/app/fault_extractor/fault_extractor/llm_api_config.json:ro
+
+  updater:
+    profiles: ["maintenance"]
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: vcb-1757-frontend:latest
+    env_file:
+      - .env
+    environment:
+      FULL_CASE_CSV: /runtime/work_order_sync/case_input_all_times.csv
+      WORK_ORDER_SYNC_RUNTIME: /runtime/work_order_sync
+      WORK_ORDER_LLM_CONFIG: /app/fault_extractor/fault_extractor/llm_api_config.json
+      ICEBERG_RAW_ENABLED: "true"
+      AWS_REGION: ap-east-1
+      ICEBERG_WAREHOUSE: s3://mtr-inf-backup/R-Train/iceberg/fault_related_data
+      ICEBERG_DB: iceberg_db
+      ICEBERG_TABLE: fault_related_data
+      ICEBERG_QUERY_RETRIES: "2"
+      HISTORICAL_EVENT_CODE: "1757"
+      QDRANT_URL: ${QDRANT_URL:-http://10.0.1.87:6333}
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-vcb_case_library_v2}
+    volumes:
+      - ./runtime:/runtime
+      - ./fault_extractor/fault_extractor/llm_api_config.json:/app/fault_extractor/fault_extractor/llm_api_config.json:ro
+    command: ["python", "scheduled_work_order_sync.py"]

@@ -30,6 +30,24 @@ $ExtractorDir = Join-Path $ScriptDir 'fault_extractor\fault_extractor'
 $ExtractorDemo = Join-Path $ExtractorDir 'demo_parse.py'
 $CoverageCheck = Join-Path $ExtractorDir 'verify_reference_coverage.py'
 $ReferenceOutput = Join-Path $ExtractorDir 'output\reference_data_with_cause_inferenced.json'
+$DataDir = Join-Path $ScriptDir '01_数据整理'
+$EnvFile = Join-Path $ScriptDir '.env'
+if (Test-Path -LiteralPath $EnvFile) {
+    $dataDirLine = Get-Content -LiteralPath $EnvFile | Where-Object {
+        $_ -match '^\s*DATA_DIR\s*='
+    } | Select-Object -Last 1
+    if ($dataDirLine) {
+        $configuredDataDir = ($dataDirLine -split '=', 2)[1].Trim().Trim('"').Trim("'")
+        if ($configuredDataDir) {
+            if ([System.IO.Path]::IsPathRooted($configuredDataDir)) {
+                $DataDir = $configuredDataDir
+            }
+            else {
+                $DataDir = Join-Path $ScriptDir $configuredDataDir
+            }
+        }
+    }
+}
 
 function Invoke-PythonStep {
     param(
@@ -56,10 +74,12 @@ if (-not (Test-Path -LiteralPath $WorkOrderXls)) {
 }
 
 Write-Host "Input: $WorkOrderXls" -ForegroundColor Green
+Write-Host "Data:  $DataDir" -ForegroundColor Green
 if ($Full) {
     Write-Host 'Mode: full rebuild' -ForegroundColor Green
     Invoke-PythonStep -Title '1/5 Rebuild case library' -Arguments @(
-        $MainScript, 'extract-build', '--work-order-xlsx', $WorkOrderXls
+        $MainScript, 'extract-build', '--work-order-xlsx', $WorkOrderXls,
+        '--data-dir', $DataDir
     )
     Invoke-PythonStep -Title '2/5 Back up case library' -Arguments @($MainScript, 'backup')
 }
@@ -68,6 +88,8 @@ else {
     $updateArgs = @(
         $MainScript, 'update-from-xlsx',
         '--work-order-xlsx', $WorkOrderXls,
+        '--data-dir', $DataDir,
+        '--no-gateway-download',
         '--backup'
     )
     if (-not $SyncQdrant) {

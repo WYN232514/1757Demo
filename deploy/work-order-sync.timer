@@ -1,0 +1,11 @@
+[Unit]
+Description=Run VCB work-order synchronization on the 1st and 16th
+
+[Timer]
+OnCalendar=*-*-01 02:30:00
+OnCalendar=*-*-16 02:30:00
+Persistent=true
+Unit=work-order-sync.service
+
+[Install]
+WantedBy=timers.target

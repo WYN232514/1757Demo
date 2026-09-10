@@ -23,6 +23,7 @@ VCB/1757 工单案例库一体化流程（最终版）
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -32,7 +33,7 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import joblib
 import numpy as np
@@ -59,7 +60,7 @@ DEFAULT_GATEWAY_WORK_ORDER_ROOT = 'gateway_downloads/work_orders'
 
 # Qdrant 向量库连接
 DEFAULT_QDRANT_URL = os.getenv('QDRANT_URL', 'http://10.0.1.87:6333')
-DEFAULT_QDRANT_COLLECTION = 'vcb_case_library'
+DEFAULT_QDRANT_COLLECTION = 'vcb_case_library_v2'
 
 # 灾备：把 case_library/ 全部文件 + 全量故障时间 CSV 打成带时间戳的 zip
 DEFAULT_BACKUP_DIR = 'backups'
@@ -1651,6 +1652,11 @@ def save_case_library_files(
 
 
 _QDRANT_PAYLOAD_EXCLUDE = ['tsne_1', 'tsne_2', 'vector_norm', 'nonzero_dim_count']
+QDRANT_SCHEMA_VERSION = 2
+
+
+def qdrant_meta_collection_name(collection_name: str) -> str:
+    return f'{str(collection_name).strip()}__meta'
 
 
 def _qdrant_clean_value(x: Any) -> Any:
@@ -1667,6 +1673,195 @@ def _qdrant_clean_value(x: Any) -> Any:
     if isinstance(x, np.bool_):
         return bool(x)
     return x
+
+
+def _qdrant_json_value(value: Any) -> Any:
+    """Recursively convert pandas/numpy/joblib values to JSON payload values."""
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return {str(key): _qdrant_json_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_qdrant_json_value(item) for item in value]
+    if isinstance(value, (pd.Timestamp, datetime)):
+        return value.isoformat()
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    cleaned = _qdrant_clean_value(value)
+    if isinstance(cleaned, Path):
+        return str(cleaned)
+    return cleaned
+
+
+_WORK_ORDER_CSV_TO_DISPLAY = {
+    'description': 'Description',
+    'long_description': 'Long Description',
+    'remark_description': 'Remark Description',
+    'failure_long_description': 'Failure Long Description',
+    'work_order_no': 'Work Order NO.',
+    'equip_instance': 'Trainset',
+    'equip_unit': 'CarNO.',
+    'equip_model_name': 'Equip Model',
+    'location_location': 'Location',
+    'location_description': 'LOCATION.DESCRIPTION',
+    'asset_num': 'Asset',
+    'asset_description': 'ASSET.DESCRIPTION',
+    'status': 'Status',
+    'change_date': 'Change Date',
+    'report_date': 'Report Date',
+    'update_time': 'Update Time',
+    'failure_code': 'Failure Code',
+    'problem_code': 'Problem Code',
+    'problem_desc': 'Problem Desc',
+    'cause_code': 'Cause Code',
+    'cause_desc': 'Cause Desc',
+    'remedy_code': 'Remedy Code',
+    'remedy_desc': 'Remedy Desc',
+    'failure_component': 'Failure Component',
+    'component_desc': 'Component Desc',
+    'replaced_component': 'Replaced Component',
+    'rep_comp_desc': 'Rep.Comp Desc',
+}
+
+
+def _clean_work_order_text(value: Any) -> str:
+    if value is None:
+        return ''
+    try:
+        if pd.isna(value):
+            return ''
+    except (TypeError, ValueError):
+        pass
+    text = str(value).strip()
+    return '' if text.lower() in {'', 'nan', 'nat', 'none', 'null'} else text
+
+
+def _load_qdrant_work_order_payloads(
+    library_dir: Path,
+    work_order_records_path: Optional[str | Path] = None,
+) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
+    """Return display-normalized and original work-order records keyed by WO."""
+    display_records: Dict[str, Dict[str, Any]] = {}
+    source_records: Dict[str, Dict[str, Any]] = {}
+    root = Path(__file__).resolve().parent
+
+    csv_path = Path(work_order_records_path) if work_order_records_path else library_dir / 'work_orders.csv'
+    if csv_path.is_file():
+        frame = pd.read_csv(csv_path, dtype=str, encoding='utf-8-sig').fillna('')
+        for _, row in frame.iterrows():
+            source = {str(column): _clean_work_order_text(row.get(column)) for column in frame.columns}
+            wo = _clean_work_order_text(source.get('work_order_no')).removesuffix('.0')
+            if not wo:
+                continue
+            source_records[wo] = source
+            display_records[wo] = {
+                _WORK_ORDER_CSV_TO_DISPLAY.get(column, column): value
+                for column, value in source.items()
+            }
+
+    # Initial migration fallback for the historical Excel bundled with the project.
+    if not display_records:
+        candidates = [root / '工单.xlsx', root / '工单.xls']
+        for path in candidates:
+            if not path.is_file():
+                continue
+            try:
+                frame = pd.read_excel(path, sheet_name=0, header=2, dtype=str).fillna('')
+            except Exception:
+                continue
+            if 'Work Order NO.' not in frame.columns:
+                continue
+            for _, row in frame.iterrows():
+                source = {str(column): _clean_work_order_text(row.get(column)) for column in frame.columns}
+                wo = _clean_work_order_text(source.get('Work Order NO.')).removesuffix('.0')
+                if not wo:
+                    continue
+                display_to_csv = {value: key for key, value in _WORK_ORDER_CSV_TO_DISPLAY.items()}
+                source_records[wo] = {
+                    display_to_csv.get(column, column): value
+                    for column, value in source.items()
+                }
+                source_records[wo]['work_order_no'] = wo
+                display_records[wo] = source
+            if display_records:
+                break
+    return display_records, source_records
+
+
+def _load_qdrant_structured_records(
+    reference_data_path: Optional[str | Path] = None,
+) -> Dict[str, Dict[str, Any]]:
+    root = Path(__file__).resolve().parent
+    path = Path(reference_data_path) if reference_data_path else (
+        root / 'fault_extractor' / 'fault_extractor' / 'output' /
+        'reference_data_with_cause_inferenced.json'
+    )
+    if not path.is_file():
+        return {}
+    raw = json.loads(path.read_text(encoding='utf-8'))
+    return {
+        str(key).strip(): dict(value)
+        for key, value in raw.items()
+        if isinstance(value, Mapping)
+    } if isinstance(raw, Mapping) else {}
+
+
+def _load_qdrant_display_name_map() -> Dict[str, str]:
+    """Load plot labels once during publishing; the frontend reads them from Qdrant."""
+    root = Path(__file__).resolve().parent
+    code_col = '编码'
+    desc_col = '描述'
+    for path in [root / '1757变量名称补充.xlsx', *sorted(root.glob('*.xlsx'))]:
+        if not path.is_file() or path.name.startswith('~$'):
+            continue
+        try:
+            frame = pd.read_excel(path, dtype=str)
+        except Exception:
+            continue
+        if code_col not in frame.columns or desc_col not in frame.columns:
+            continue
+        result: Dict[str, str] = {}
+        for _, row in frame.iterrows():
+            code = _clean_work_order_text(row.get(code_col))
+            description = _clean_work_order_text(row.get(desc_col))
+            if code and description:
+                result[normalize_code(code)] = description
+        if result:
+            return result
+    return {}
+
+
+def _load_qdrant_gateway_metrics() -> List[Dict[str, str]]:
+    path = Path(__file__).resolve().parent / 'gateway_metrics.json'
+    if not path.is_file():
+        return []
+    raw = json.loads(path.read_text(encoding='utf-8'))
+    if not isinstance(raw, list):
+        return []
+    result: List[Dict[str, str]] = []
+    for item in raw:
+        if isinstance(item, str):
+            code = item.strip()
+            source: Mapping[str, Any] = {}
+        elif isinstance(item, Mapping):
+            code = _clean_work_order_text(item.get('code'))
+            source = item
+        else:
+            continue
+        if not code:
+            continue
+        coach_match = re.search(r'_(\d{2})_(?:sd|sdr)$', code, flags=re.IGNORECASE)
+        default_unit = str(int(coach_match.group(1))) if coach_match else '0'
+        result.append({
+            'code': code,
+            'equipUnit': _clean_work_order_text(
+                source.get('equipUnit', source.get('coach', default_unit))
+            ) or default_unit,
+        })
+    return result
 
 
 def _qdrant_existing_dim(info: Any) -> Optional[int]:
@@ -1691,16 +1886,16 @@ def sync_library_to_qdrant(
     collection_name: str = DEFAULT_QDRANT_COLLECTION,
     recreate: bool = True,
     only_case_ids: Optional[Iterable[str]] = None,
+    reference_data_path: Optional[str | Path] = None,
+    work_order_records_path: Optional[str | Path] = None,
+    client: Any = None,
 ) -> int:
-    """把本地案例库 (vectors.npy + metadata.csv) 同步进 Qdrant。
+    """Publish a complete, self-contained case library to Qdrant schema v2.
 
-    - recreate=True：删表重建后整库写入（维度变化、或想清理旧 point 时用）。
-    - recreate=False：增量模式，不删表。
-        * only_case_ids 为 None 时 upsert 全部 point；
-        * only_case_ids 给定时只 upsert 这些 case_id（日常增量，最快）。
-      增量模式会先校验现有 collection 维度与本地向量一致，不一致会报错提示重建。
-
-    返回实际写入的 point 数量。
+    The main collection stores one point per case with vector, metadata,
+    segment, node counts and work-order payloads.  ``<collection>__meta`` stores
+    the node index and release manifest.  Complete replacement is intentional:
+    a partially stale collection must never be treated as the live library.
     """
     # 防止本地代理影响 localhost 连接
     os.environ.setdefault('NO_PROXY', 'localhost,127.0.0.1,10.0.1.87,::1')
@@ -1718,72 +1913,283 @@ def sync_library_to_qdrant(
     library_dir = Path(library_dir)
     vectors_path = library_dir / 'vectors.npy'
     metadata_path = library_dir / 'metadata.csv'
-    if not vectors_path.exists() or not metadata_path.exists():
-        raise FileNotFoundError(f'案例库文件不完整，找不到 vectors.npy 或 metadata.csv: {library_dir}')
+    node_index_path = library_dir / 'node_index.joblib'
+    segments_path = library_dir / 'segments.joblib'
+    required = [vectors_path, metadata_path, node_index_path, segments_path]
+    missing_files = [path.name for path in required if not path.is_file()]
+    if missing_files:
+        raise FileNotFoundError(f'案例库文件不完整，缺少 {missing_files}: {library_dir}')
 
     vectors = np.load(vectors_path).astype('float32')
     metadata = pd.read_csv(metadata_path)
     if len(metadata) != len(vectors):
         raise ValueError(f'metadata 行数({len(metadata)})和 vectors 行数({len(vectors)})不一致')
 
-    vector_dim = int(vectors.shape[1])
-    client = QdrantClient(url=qdrant_url)
-    exists = client.collection_exists(collection_name)
-
-    if recreate:
-        if exists:
-            print(f'删除旧 Qdrant collection: {collection_name}')
-            client.delete_collection(collection_name)
-        print(f'创建 Qdrant collection: {collection_name}, dim={vector_dim}')
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_dim, distance=Distance.COSINE),
-        )
-    elif not exists:
-        print(f'Qdrant collection 不存在，创建: {collection_name}, dim={vector_dim}')
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_dim, distance=Distance.COSINE),
-        )
-    else:
-        # 增量模式：维度必须一致，否则老向量已失效，必须重建
-        existing_dim = _qdrant_existing_dim(client.get_collection(collection_name))
-        if existing_dim is not None and existing_dim != vector_dim:
-            raise ValueError(
-                f'增量同步失败：Qdrant 现有维度={existing_dim}，本地向量维度={vector_dim}，不一致。'
-                f'请用 recreate=True 重建 collection（命令行: sync-qdrant，不加 --no-recreate）。'
+    node_index = joblib.load(node_index_path)
+    segments = joblib.load(segments_path)
+    counts_path = library_dir / 'node_counts.joblib'
+    node_counts = joblib.load(counts_path) if counts_path.is_file() else {}
+    for _, row in metadata.iterrows():
+        case_id = str(row.get('case_id', ''))
+        if case_id and case_id not in node_counts and case_id in segments:
+            node_counts[case_id] = segment_to_node_counts(
+                segments[case_id], car_no=row.get('car_no', '')
             )
 
-    only_set = {str(c) for c in only_case_ids} if only_case_ids is not None else None
+    raw_records, source_records = _load_qdrant_work_order_payloads(
+        library_dir, work_order_records_path
+    )
+    structured_records = _load_qdrant_structured_records(reference_data_path)
+    local_manifest: Dict[str, Any] = {}
+    manifest_path = library_dir / 'manifest.json'
+    if manifest_path.is_file():
+        try:
+            local_manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        except Exception:
+            local_manifest = {}
+
+    vector_dim = int(vectors.shape[1])
+    if len(node_index) != vector_dim:
+        raise ValueError(
+            f'node_index 大小({len(node_index)})与向量维度({vector_dim})不一致'
+        )
+    if client is None:
+        qdrant_api_key = os.getenv('QDRANT_API_KEY', '').strip()
+        client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key or None)
+
+    meta_collection = qdrant_meta_collection_name(collection_name)
+    for name in (collection_name, meta_collection):
+        if client.collection_exists(name):
+            print(f'删除旧 Qdrant collection: {name}')
+            client.delete_collection(name)
+    print(f'创建 Qdrant collection: {collection_name}, dim={vector_dim}')
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=vector_dim, distance=Distance.COSINE),
+    )
 
     points = []
     for i, row in metadata.iterrows():
-        payload: Dict[str, Any] = {}
+        metadata_payload: Dict[str, Any] = {}
         for col in metadata.columns:
             if col in _QDRANT_PAYLOAD_EXCLUDE:
                 continue
-            payload[col] = _qdrant_clean_value(row[col])
-
-        if payload.get('case_id') is None:
-            work_order_no = payload.get('work_order_no', 'unknown')
-            time_order = payload.get('time_order', i)
-            payload['case_id'] = f'{work_order_no}__{time_order}'
-
-        if only_set is not None and str(payload.get('case_id')) not in only_set:
-            continue
-
+            metadata_payload[col] = _qdrant_json_value(row[col])
+        if metadata_payload.get('case_id') is None:
+            work_order_no = metadata_payload.get('work_order_no', 'unknown')
+            time_order = metadata_payload.get('time_order', i)
+            metadata_payload['case_id'] = f'{work_order_no}__{time_order}'
+        case_id = str(metadata_payload['case_id'])
+        work_order = str(metadata_payload.get('work_order_no') or '').strip()
+        payload = {
+            'schema_version': QDRANT_SCHEMA_VERSION,
+            'record_type': 'case',
+            'case_id': case_id,
+            'work_order_no': work_order,
+            'metadata': metadata_payload,
+            'segment': _qdrant_json_value(segments.get(case_id, [])),
+            'node_counts': _qdrant_json_value(node_counts.get(case_id, {})),
+            'raw_work_order': _qdrant_json_value(raw_records.get(work_order, {})),
+            'work_order_source': _qdrant_json_value(source_records.get(work_order, {})),
+            'structured_work_order': _qdrant_json_value(structured_records.get(work_order, {})),
+        }
         points.append(PointStruct(id=int(i), vector=vectors[i].tolist(), payload=payload))
 
-    mode_text = '重建整库' if recreate else (f'增量 {len(points)} 条' if only_set is not None else '全量 upsert')
-    print(f'开始同步到 Qdrant（{mode_text}）...')
-    if points:
-        client.upsert(collection_name=collection_name, points=points)
-    else:
-        print('没有需要写入的 point（增量集合为空）。')
+    print('开始同步完整案例数据到 Qdrant...')
+    for start in range(0, len(points), 64):
+        client.upsert(
+            collection_name=collection_name,
+            points=points[start:start + 64],
+            wait=True,
+        )
+
+    published_at = datetime.now().isoformat()
+    manifest_payload = {
+        'schema_version': QDRANT_SCHEMA_VERSION,
+        'record_type': 'library_manifest',
+        'main_collection': collection_name,
+        'published_at': published_at,
+        'library_version': hashlib.sha256(
+            (published_at + json.dumps(node_index, ensure_ascii=False, sort_keys=True)).encode('utf-8')
+        ).hexdigest()[:20],
+        'case_count': int(len(points)),
+        'work_order_count': int(metadata['work_order_no'].astype(str).nunique()),
+        'vector_dimension': vector_dim,
+        'node_index': _qdrant_json_value(node_index),
+        'display_name_map': _qdrant_json_value(_load_qdrant_display_name_map()),
+        'gateway_metrics': _qdrant_json_value(_load_qdrant_gateway_metrics()),
+        'source_manifest': _qdrant_json_value(local_manifest),
+    }
+    client.create_collection(
+        collection_name=meta_collection,
+        vectors_config=VectorParams(size=1, distance=Distance.COSINE),
+    )
+    client.upsert(
+        collection_name=meta_collection,
+        points=[PointStruct(id=1, vector=[0.0], payload=manifest_payload)],
+        wait=True,
+    )
     info = client.get_collection(collection_name)
-    print(f'Qdrant 同步完成: collection={collection_name}, dim={vector_dim}, '
-          f'本次写入={len(points)}, 库内总数={info.points_count}')
+    print(f'Qdrant 完整案例库发布完成: collection={collection_name}, meta={meta_collection}, '
+          f'dim={vector_dim}, 本次写入={len(points)}, 库内总数={info.points_count}')
     return len(points)
+
+
+def load_complete_library_from_qdrant(
+    qdrant_url: str = DEFAULT_QDRANT_URL,
+    collection_name: str = DEFAULT_QDRANT_COLLECTION,
+    client: Any = None,
+) -> Dict[str, Any]:
+    """Load the complete schema-v2 case library without local data files."""
+    try:
+        from qdrant_client import QdrantClient
+    except Exception as exc:
+        raise ImportError('需要 qdrant-client 才能读取完整案例库') from exc
+    if client is None:
+        api_key = os.getenv('QDRANT_API_KEY', '').strip()
+        client = QdrantClient(url=qdrant_url, api_key=api_key or None)
+
+    meta_collection = qdrant_meta_collection_name(collection_name)
+    if not client.collection_exists(collection_name):
+        raise RuntimeError(f'Qdrant 主 collection 不存在：{collection_name}')
+    if not client.collection_exists(meta_collection):
+        raise RuntimeError(
+            f'Qdrant manifest collection 不存在：{meta_collection}；'
+            '请先执行新版 sync-qdrant 完整迁移'
+        )
+    meta_points = client.retrieve(
+        collection_name=meta_collection,
+        ids=[1],
+        with_payload=True,
+        with_vectors=False,
+    )
+    if not meta_points:
+        raise RuntimeError(f'Qdrant manifest 缺失：{meta_collection}/1')
+    manifest = dict(meta_points[0].payload or {})
+    if int(manifest.get('schema_version') or 0) != QDRANT_SCHEMA_VERSION:
+        raise RuntimeError(
+            f'Qdrant 案例库 schema_version={manifest.get("schema_version")}，'
+            f'前端要求 {QDRANT_SCHEMA_VERSION}'
+        )
+    node_index_raw = manifest.get('node_index')
+    if not isinstance(node_index_raw, Mapping) or not node_index_raw:
+        raise RuntimeError('Qdrant manifest 中没有 node_index')
+    node_index = {str(key): int(value) for key, value in node_index_raw.items()}
+
+    loaded: List[tuple[int, Dict[str, Any], np.ndarray]] = []
+    segments: Dict[str, Any] = {}
+    node_counts: Dict[str, Dict[str, int]] = {}
+    raw_records: Dict[str, Dict[str, Any]] = {}
+    source_records: Dict[str, Dict[str, Any]] = {}
+    structured_records: Dict[str, Dict[str, Any]] = {}
+    offset = None
+    while True:
+        records, next_offset = client.scroll(
+            collection_name=collection_name,
+            limit=128,
+            offset=offset,
+            with_payload=True,
+            with_vectors=True,
+        )
+        for record in records:
+            payload = dict(record.payload or {})
+            if payload.get('record_type') != 'case' or int(payload.get('schema_version') or 0) != QDRANT_SCHEMA_VERSION:
+                continue
+            metadata_payload = payload.get('metadata')
+            if not isinstance(metadata_payload, Mapping):
+                raise RuntimeError(f'Qdrant point {record.id} 缺少 metadata')
+            metadata_row = dict(metadata_payload)
+            case_id = str(payload.get('case_id') or metadata_row.get('case_id') or '').strip()
+            work_order = str(payload.get('work_order_no') or metadata_row.get('work_order_no') or '').strip()
+            if not case_id:
+                raise RuntimeError(f'Qdrant point {record.id} 缺少 case_id')
+            vector = record.vector
+            if isinstance(vector, Mapping):
+                vector = vector.get('') or vector.get('default')
+            vector_array = np.asarray(vector, dtype=float)
+            if vector_array.ndim != 1 or len(vector_array) != len(node_index):
+                raise RuntimeError(
+                    f'Qdrant case {case_id} 向量维度={len(vector_array)}，'
+                    f'node_index={len(node_index)}'
+                )
+            row_order = int(metadata_row.get('row_index') or record.id)
+            loaded.append((row_order, metadata_row, vector_array))
+            segments[case_id] = payload.get('segment') or []
+            counts_payload = payload.get('node_counts') or {}
+            node_counts[case_id] = {
+                str(key): int(value) for key, value in counts_payload.items()
+            } if isinstance(counts_payload, Mapping) else {}
+            if work_order:
+                if isinstance(payload.get('raw_work_order'), Mapping):
+                    raw_records[work_order] = dict(payload['raw_work_order'])
+                if isinstance(payload.get('work_order_source'), Mapping):
+                    source_records[work_order] = dict(payload['work_order_source'])
+                if isinstance(payload.get('structured_work_order'), Mapping):
+                    structured_records[work_order] = dict(payload['structured_work_order'])
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    if not loaded:
+        raise RuntimeError(f'Qdrant collection {collection_name} 中没有 schema v2 案例')
+    loaded.sort(key=lambda item: item[0])
+    metadata = pd.DataFrame([item[1] for item in loaded])
+    metadata['row_index'] = range(len(metadata))
+    vectors = np.vstack([item[2] for item in loaded])
+    expected_count = int(manifest.get('case_count') or 0)
+    if expected_count and expected_count != len(metadata):
+        raise RuntimeError(
+            f'Qdrant manifest case_count={expected_count}，实际读取={len(metadata)}'
+        )
+    return {
+        'vectors': vectors,
+        'metadata': metadata,
+        'node_index': node_index,
+        'segments': segments,
+        'node_counts': node_counts,
+        'raw_work_order_records': raw_records,
+        'work_order_source_records': source_records,
+        'structured_work_order_records': structured_records,
+        'manifest': manifest,
+    }
+
+
+def export_complete_qdrant_library(
+    destination_dir: str | Path,
+    qdrant_url: str = DEFAULT_QDRANT_URL,
+    collection_name: str = DEFAULT_QDRANT_COLLECTION,
+    client: Any = None,
+) -> Dict[str, Any]:
+    """Materialize a temporary build snapshot from Qdrant for maintenance jobs."""
+    data = load_complete_library_from_qdrant(qdrant_url, collection_name, client=client)
+    destination = Path(destination_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    np.save(destination / 'vectors.npy', data['vectors'])
+    data['metadata'].to_csv(destination / 'metadata.csv', index=False, encoding='utf-8-sig')
+    joblib.dump(data['node_index'], destination / 'node_index.joblib')
+    joblib.dump(data['segments'], destination / 'segments.joblib')
+    joblib.dump(data['node_counts'], destination / 'node_counts.joblib')
+    pd.DataFrame(columns=['work_order_no', 'status']).to_csv(
+        destination / 'process_log.csv', index=False, encoding='utf-8-sig'
+    )
+    source_rows = list(data['work_order_source_records'].values())
+    if source_rows:
+        pd.DataFrame(source_rows).to_csv(
+            destination / 'work_orders.csv', index=False, encoding='utf-8-sig'
+        )
+    (destination / 'structured_work_orders.json').write_text(
+        json.dumps(data['structured_work_order_records'], ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
+    (destination / 'manifest.json').write_text(
+        json.dumps(data['manifest'], ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
+    (destination / 'gateway_metrics.json').write_text(
+        json.dumps(data['manifest'].get('gateway_metrics', []), ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
+    return data
 
 
 # ============================================================
@@ -2714,7 +3120,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     sync_parser.add_argument('--library-dir', default=DEFAULT_SAVE_DIR)
     sync_parser.add_argument('--qdrant-url', default=DEFAULT_QDRANT_URL)
     sync_parser.add_argument('--qdrant-collection', default=DEFAULT_QDRANT_COLLECTION)
-    sync_parser.add_argument('--no-recreate', action='store_true', help='不删表重建，仅 upsert（向量维度变化时会失败）')
+    sync_parser.add_argument('--no-recreate', action='store_true', help='兼容旧命令；schema v2 始终完整重建以避免残留旧数据')
 
     backup_parser = subparsers.add_parser('backup', help='打包备份案例库（case_library/ + 全量CSV）')
     backup_parser.add_argument('--library-dir', default=DEFAULT_SAVE_DIR)

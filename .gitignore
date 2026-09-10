@@ -2,7 +2,12 @@
 .env
 .env.*
 !.env.example
+server.env*
+!server.env.example
 config.yaml
+*.pem
+*.ppk
+*.key
 **/llm_api_config.json
 
 # Python/editor caches
@@ -13,6 +18,7 @@ __pycache__/
 .mypy_cache/
 .vscode/
 .idea/
+.codex_chrome_refine/
 
 # Large or sensitive business data
 01_数据整理/
@@ -35,6 +41,15 @@ fault_extractor/**/output/
 *.png
 *.html
 *.log
+raw_data_catalog.sqlite3*
+runtime/work_order_sync/
+runtime/historical_raw_cache/
+# Runtime contains browser profiles, API responses and machine-local test data.
+# Keep only reusable diagnostic scripts under version control.
+runtime/*
+!runtime/*.py
+!runtime/*.js
+!runtime/*.ps1
 
 # Keep source-controlled runtime configuration
 !gateway_metrics.json

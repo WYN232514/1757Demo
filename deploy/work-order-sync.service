@@ -1,0 +1,13 @@
+[Unit]
+Description=VCB 1757 half-month work-order case-library synchronization
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/lq/1757Demo
+ExecStart=/usr/bin/docker compose -f docker-compose.frontend.yml run --rm updater
+ExecStartPost=/usr/bin/docker compose -f docker-compose.frontend.yml restart frontend
+TimeoutStartSec=6h
+

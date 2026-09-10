@@ -1,0 +1,21 @@
+[Unit]
+Description=VCB 1757 Similar Work Order Dash Application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kcls
+WorkingDirectory=/data/港铁受电弓/1757Demo
+EnvironmentFile=/data/港铁受电弓/1757Demo/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
+ExecStart=/data/港铁受电弓/1757Demo/.venv/bin/gunicorn --bind 0.0.0.0:8050 --workers 1 --worker-class gthread --threads 4 --timeout 1800 --graceful-timeout 60 --keep-alive 5 --access-logfile - --error-logfile - app_visualize:server
+Restart=always
+RestartSec=5
+TimeoutStopSec=70
+LimitNOFILE=65535
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

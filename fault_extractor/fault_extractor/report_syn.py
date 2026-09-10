@@ -32,6 +32,13 @@ maintainer can refer to the old documents when treating a new fault.
 
 Return one valid JSON object only, with these exact keys:
 {
+  "priority_components": [
+    {
+      "component": "...",
+      "reason": "...",
+      "source_work_orders": ["..."]
+    }
+  ],
   "situation_assessment": ["..."],
   "recommended_steps": ["..."],
   "document_focus": ["..."],
@@ -42,6 +49,13 @@ Rules:
 - Do not invent a root cause, part number, test result, measurement, or work order.
 - Similarity is evidence for reference priority, not proof that the new fault has the same cause.
 - Treat causes marked as inferred/inferenced as hypotheses, not direct findings.
+- Treat source_description, source_long_description, and the other source_* fields as the primary evidence. Structured cause/component fields are secondary summaries and may be incomplete or over-generalized.
+- Read the full source_long_description for every supplied case. Use its observations, diagnostic findings, maintenance actions, replaced-for-testing notes, and final results to distinguish the cases.
+- In priority_components, name specific components or circuits actually supported by the source text and explain why each should be checked. Include the supporting work-order numbers.
+- Rank direct physical findings and confirmed failed/replaced parts first, abnormal diagnostic signals second, and merely tested/checked components last.
+- Do not choose "VCB ramping-down finish signal circuit" merely because it appears in a structured cause field. Use it only when the raw work-order narrative documents that signal abnormality, and do not present it as a confirmed physical root cause unless the source does.
+- Preserve distinctions such as NFF/no repeat, suspected, replaced for testing, and confirmed damaged/burnt/failed.
+- A component "replaced for testing" followed by a passed function test is only a historical troubleshooting action, not proof that the replaced component caused the fault. State that limitation in its priority reason.
 - Prefer checks, confirmation, and functional tests before replacement unless a historical case gives direct physical evidence.
 - Write every bullet in concise Simplified Chinese; keep work-order numbers, signal names, component names, and part numbers unchanged.
 - Keep each bullet concise, practical, and professional.
@@ -51,6 +65,7 @@ Rules:
 def report_synthesis(
     similar_fault_info: Dict[str, float],
     reference_data_path: str | Path = DEFAULT_REFERENCE_DATA_PATH,
+    raw_work_order_records: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> str:
     """Build a Markdown report from similar historical work-order references.
 
@@ -72,7 +87,11 @@ def report_synthesis(
         FileNotFoundError: If reference_data_path does not exist.
         json.JSONDecodeError: If reference_data_path is not valid JSON.
     """
-    details = report_synthesis_details(similar_fault_info, reference_data_path)
+    details = report_synthesis_details(
+        similar_fault_info,
+        reference_data_path,
+        raw_work_order_records=raw_work_order_records,
+    )
     normalized_similarity = details["normalized_similarity"]
     if not normalized_similarity:
         return _empty_report()
@@ -95,6 +114,8 @@ def report_synthesis(
 def report_synthesis_details(
     similar_fault_info: Dict[str, float],
     reference_data_path: str | Path = DEFAULT_REFERENCE_DATA_PATH,
+    raw_work_order_records: Optional[Mapping[str, Mapping[str, Any]]] = None,
+    reference_data: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Return source facts and synthesis separately for structured report UIs."""
     normalized_similarity = _normalize_similar_fault_info(similar_fault_info)
@@ -108,8 +129,16 @@ def report_synthesis_details(
     if not normalized_similarity:
         return empty
 
-    reference_data = _load_reference_data(reference_data_path)
-    cases, missing_work_orders = _select_reference_cases(normalized_similarity, reference_data)
+    indexed_reference_data = (
+        _index_reference_mapping(reference_data)
+        if reference_data is not None
+        else _load_reference_data(reference_data_path)
+    )
+    cases, missing_work_orders = _select_reference_cases(
+        normalized_similarity,
+        indexed_reference_data,
+        raw_work_order_records=raw_work_order_records,
+    )
     if not cases:
         empty["missing_work_orders"] = missing_work_orders
         return empty
@@ -213,9 +242,27 @@ def _load_reference_data(reference_data_path: str | Path) -> Dict[str, Dict[str,
     return indexed
 
 
+def _index_reference_mapping(
+    raw: Mapping[str, Mapping[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    indexed: Dict[str, Dict[str, Any]] = {}
+    for key, value in raw.items():
+        if not isinstance(value, Mapping):
+            continue
+        entry = dict(value)
+        key_text = str(key).strip()
+        work_order = str(entry.get("work_order") or key_text).strip()
+        if key_text:
+            indexed[key_text] = entry
+        if work_order:
+            indexed[work_order] = entry
+    return indexed
+
+
 def _select_reference_cases(
     normalized_similarity: Sequence[Tuple[str, float]],
     reference_data: Mapping[str, Mapping[str, Any]],
+    raw_work_order_records: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     cases: List[Dict[str, Any]] = []
     missing: List[str] = []
@@ -225,7 +272,20 @@ def _select_reference_cases(
         if entry is None:
             missing.append(work_order)
             continue
-        cases.append(_case_from_reference(rank, work_order, similarity, entry))
+        raw_record = (
+            raw_work_order_records.get(work_order, {})
+            if raw_work_order_records is not None
+            else {}
+        )
+        cases.append(
+            _case_from_reference(
+                rank,
+                work_order,
+                similarity,
+                entry,
+                raw_record=raw_record,
+            )
+        )
 
     return cases, missing
 
@@ -235,7 +295,9 @@ def _case_from_reference(
     work_order: str,
     similarity: float,
     entry: Mapping[str, Any],
+    raw_record: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
+    raw_record = raw_record or {}
     treatment_pairs = _pair_components_events(entry.get("treatment_components"), entry.get("treatment_events"))
     phenomenon_pairs = _pair_components_events(entry.get("phenomenon_component"), entry.get("phenomenon_events"))
     cause_pairs = _pair_components_events(entry.get("cause_components"), entry.get("cause_events"))
@@ -264,23 +326,42 @@ def _case_from_reference(
         "phenomenon": phenomenon_pairs,
         "cause_signals": cause_pairs,
         "treatments": treatment_pairs,
-        "phenomenon_components": _as_clean_list(entry.get("phenomenon_component")),
-        "phenomenon_events": _as_clean_list(entry.get("phenomenon_events")),
-        "cause_components": _as_clean_list(entry.get("cause_components")),
-        "cause_events": _as_clean_list(entry.get("cause_events")),
-        "treatment_components": _as_clean_list(entry.get("treatment_components")),
-        "treatment_events": _as_clean_list(entry.get("treatment_events")),
+        # These are parallel positional arrays. Do not deduplicate either side
+        # independently: e.g. VCB may be reset and checked before C/I GCU is
+        # replaced. Removing the repeated VCB shifts every later action onto
+        # the wrong component ("replaced ATR" instead of "replaced C/I GCU").
+        "phenomenon_components": _as_clean_list_preserve_order(entry.get("phenomenon_component")),
+        "phenomenon_events": _as_clean_list_preserve_order(entry.get("phenomenon_events")),
+        "cause_components": _as_clean_list_preserve_order(entry.get("cause_components")),
+        "cause_events": _as_clean_list_preserve_order(entry.get("cause_events")),
+        "treatment_components": _as_clean_list_preserve_order(entry.get("treatment_components")),
+        "treatment_events": _as_clean_list_preserve_order(entry.get("treatment_events")),
         "equip_model": _safe_text(entry.get("equip_model")),
         "equip_instance": _safe_text(entry.get("equip_instance")),
         "equip_unit": _safe_text(entry.get("equip_unit")),
         "replace_in_part": _as_clean_list(entry.get("replace_in_part")),
         "replace_out_part": _as_clean_list(entry.get("replace_out_part")),
+        "source_description": _source_text(raw_record.get("Description")),
+        "source_long_description": _source_text(raw_record.get("Long Description"), max_len=6000),
+        "source_failure_long_description": _source_text(
+            raw_record.get("Failure Long Description"),
+            max_len=4000,
+        ),
+        "source_problem_description": _source_text(raw_record.get("Problem Desc")),
+        "source_cause_description": _source_text(raw_record.get("Cause Desc")),
+        "source_remedy_description": _source_text(raw_record.get("Remedy Desc")),
+        "source_failure_component": _source_text(raw_record.get("Failure Component")),
+        "source_component_description": _source_text(raw_record.get("Component Desc")),
+        "source_replaced_component": _source_text(raw_record.get("Replaced Component")),
+        "source_replaced_component_description": _source_text(raw_record.get("Rep.Comp Desc")),
     }
 
 
 def _derive_synthesis_facts(cases: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
     component_scores: Dict[str, float] = defaultdict(float)
     cause_component_scores: Dict[str, float] = defaultdict(float)
+    physical_cause_component_scores: Dict[str, float] = defaultdict(float)
+    treatment_component_scores: Dict[str, float] = defaultdict(float)
     action_scores: Dict[str, float] = defaultdict(float)
     phenomenon_scores: Dict[str, float] = defaultdict(float)
     cause_scores: Dict[str, float] = defaultdict(float)
@@ -293,6 +374,10 @@ def _derive_synthesis_facts(cases: Sequence[Mapping[str, Any]]) -> Dict[str, Any
         for component in case.get("cause_components", []):
             cause_component_scores[component] += weight * 1.5
             component_scores[component] += weight * 0.75
+            if not _is_generic_diagnostic_component(component):
+                physical_cause_component_scores[component] += weight * 1.5
+        for component in case.get("treatment_components", []):
+            treatment_component_scores[component] += weight
         for action in case.get("action_items", []):
             action_scores[action] += weight
         for event in case.get("phenomenon_events", []):
@@ -316,6 +401,11 @@ def _derive_synthesis_facts(cases: Sequence[Mapping[str, Any]]) -> Dict[str, Any
         "similarity_range": [min(float(c.get("similarity") or 0.0) for c in cases), max(float(c.get("similarity") or 0.0) for c in cases)],
         "top_components": _top_weighted_items(component_scores, 8),
         "top_cause_components": _top_weighted_items(cause_component_scores, 6),
+        "top_physical_cause_components": _top_weighted_items(
+            physical_cause_component_scores,
+            6,
+        ),
+        "top_treatment_components": _top_weighted_items(treatment_component_scores, 8),
         "top_actions": _top_weighted_items(action_scores, 8),
         "top_phenomenon_events": _top_weighted_items(phenomenon_scores, 5),
         "top_causes": _top_weighted_items(cause_scores, 5),
@@ -336,7 +426,7 @@ def _top_weighted_items(scores: Mapping[str, float], limit: int) -> List[Dict[st
 def _llm_synthesis(
     cases: Sequence[Mapping[str, Any]],
     synthesis_facts: Mapping[str, Any],
-) -> Optional[Dict[str, List[str]]]:
+) -> Optional[Dict[str, Any]]:
     if _env_flag("REPORT_SYN_DISABLE_LLM"):
         return None
     if not DEFAULT_CONFIG_PATH.exists():
@@ -374,7 +464,12 @@ def _llm_synthesis(
     if not isinstance(parsed, Mapping):
         return None
 
-    cleaned: Dict[str, List[str]] = {}
+    cleaned: Dict[str, Any] = {
+        "priority_components": _clean_priority_components(
+            parsed.get("priority_components", []),
+            max_items=6,
+        )
+    }
     for key in ("situation_assessment", "recommended_steps", "document_focus", "cautions"):
         items = parsed.get(key, [])
         cleaned[key] = _clean_bullet_list(items, max_items=8)
@@ -386,10 +481,18 @@ def _llm_synthesis(
 def _deterministic_synthesis(
     cases: Sequence[Mapping[str, Any]],
     synthesis_facts: Mapping[str, Any],
-) -> Dict[str, List[str]]:
+) -> Dict[str, Any]:
     top_case = cases[0]
     top_components = _items_only(synthesis_facts.get("top_components", []), limit=4)
     top_cause_components = _items_only(synthesis_facts.get("top_cause_components", []), limit=4)
+    top_physical_cause_components = _items_only(
+        synthesis_facts.get("top_physical_cause_components", []),
+        limit=4,
+    )
+    top_treatment_components = _items_only(
+        synthesis_facts.get("top_treatment_components", []),
+        limit=4,
+    )
     top_actions = _items_only(synthesis_facts.get("top_actions", []), limit=5)
     top_events = _items_only(synthesis_facts.get("top_phenomenon_events", []), limit=3)
     top_causes = _items_only(synthesis_facts.get("top_causes", []), limit=3)
@@ -409,10 +512,14 @@ def _deterministic_synthesis(
         "复位或进一步测试前先保存并下载诊断日志，并记录复位或动车后故障是否复现。",
         "优先执行非侵入式检查，包括相关回路检查、VCB/APC/ATR 功能测试、复位验证，以及适用时的行车或整备检查。",
     ]
-    if top_cause_components:
-        recommended.append("优先检查原因侧部件或信号：" + "、".join(top_cause_components) + "。")
-    elif top_components:
-        recommended.append("优先检查历史案例中高频涉及的部件：" + "、".join(top_components) + "。")
+    priority_components = (
+        top_physical_cause_components
+        or top_treatment_components
+        or top_cause_components
+        or top_components
+    )
+    if priority_components:
+        recommended.append("优先核对工单正文中有证据支持的部件或回路：" + "、".join(priority_components) + "。")
     if top_actions:
         recommended.append("结合旧工单复核历史处置动作：" + "；".join(top_actions) + "。")
     recommended.append("完成处置后重复相关功能测试，并持续观察无复现证据，再考虑关闭新故障。")
@@ -429,6 +536,20 @@ def _deterministic_synthesis(
     ]
 
     return {
+        "priority_components": [
+            {
+                "component": component,
+                "reason": "由相似工单的结构化处置或直接原因字段支持；请结合原始 Long Description 复核。",
+                "source_work_orders": [
+                    str(case.get("work_order", ""))
+                    for case in cases
+                    if component in list(case.get("components", []))
+                    or component in list(case.get("cause_components", []))
+                    or component in list(case.get("treatment_components", []))
+                ][:4],
+            }
+            for component in priority_components[:4]
+        ],
         "situation_assessment": situation,
         "recommended_steps": recommended,
         "document_focus": document_focus,
@@ -439,7 +560,7 @@ def _deterministic_synthesis(
 def _render_markdown_report(
     cases: Sequence[Mapping[str, Any]],
     synthesis_facts: Mapping[str, Any],
-    narrative: Mapping[str, Sequence[str]],
+    narrative: Mapping[str, Any],
     missing_work_orders: Sequence[str],
     reference_data_path: Path,
 ) -> str:
@@ -565,6 +686,40 @@ def _clean_bullet_list(items: Any, max_items: int) -> List[str]:
     return cleaned
 
 
+def _clean_priority_components(items: Any, max_items: int) -> List[Dict[str, Any]]:
+    if isinstance(items, (str, Mapping)):
+        raw_items = [items]
+    elif isinstance(items, Iterable):
+        raw_items = list(items)
+    else:
+        raw_items = []
+
+    cleaned: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw_items:
+        if isinstance(item, Mapping):
+            component = _safe_text(item.get("component"))
+            reason = _safe_text(item.get("reason"))
+            work_orders = _as_clean_list(item.get("source_work_orders"))
+        else:
+            component = _safe_text(item)
+            reason = "N/A"
+            work_orders = []
+        if _is_na(component) or component.lower() in seen:
+            continue
+        seen.add(component.lower())
+        cleaned.append(
+            {
+                "component": component,
+                "reason": "" if _is_na(reason) else reason,
+                "source_work_orders": work_orders[:6],
+            }
+        )
+        if len(cleaned) >= max_items:
+            break
+    return cleaned
+
+
 def _pair_components_events(components: Any, events: Any) -> List[str]:
     # Preserve duplicate events before pairing: repeated actions such as
     # [checked, checked, replaced, replaced] carry positional meaning.
@@ -637,6 +792,27 @@ def _safe_text(value: Any) -> str:
         text = str(value)
     text = re.sub(r"\s+", " ", text).strip()
     return text if text else "N/A"
+
+
+def _source_text(value: Any, max_len: int = 2500) -> str:
+    text = _safe_text(value)
+    if _is_na(text):
+        return "N/A"
+    return text if len(text) <= max_len else text[: max_len - 1].rstrip() + "…"
+
+
+def _is_generic_diagnostic_component(value: Any) -> bool:
+    text = _safe_text(value).lower()
+    return any(
+        marker in text
+        for marker in (
+            "signal circuit",
+            "detection/control circuit",
+            "trip/control circuit",
+            "control chain",
+            "control abnormality",
+        )
+    )
 
 
 def _is_na(value: Any) -> bool:

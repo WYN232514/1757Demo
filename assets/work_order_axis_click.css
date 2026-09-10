@@ -1,0 +1,13 @@
+#work_order_similarity_heatmap .xtick,
+#work_order_similarity_heatmap .ytick,
+#work_order_similarity_heatmap .xtick text,
+#work_order_similarity_heatmap .ytick text {
+    pointer-events: all !important;
+    cursor: pointer !important;
+}
+
+#work_order_similarity_heatmap .xtick text:hover,
+#work_order_similarity_heatmap .ytick text:hover {
+    fill: #e6194b !important;
+    font-weight: 700;
+}

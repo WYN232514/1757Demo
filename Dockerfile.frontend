@@ -1,0 +1,32 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8 \
+    GATEWAY_QUERY_ROOT=/runtime/gateway_downloads/api_queries \
+    HISTORICAL_RAW_CACHE_DIR=/runtime/historical_raw_cache \
+    RAW_DATA_CATALOG_PATH=/runtime/raw_data_catalog.sqlite3 \
+    DASH_REQUESTS_PATHNAME_PREFIX=/ \
+    GATEWAY_BEFORE_MIN=1 \
+    GATEWAY_AFTER_MIN=0.5 \
+    NO_PROXY=localhost,127.0.0.1,::1 \
+    no_proxy=localhost,127.0.0.1,::1
+
+WORKDIR /app
+
+COPY requirements-api.txt requirements-server.txt ./
+RUN pip install --no-cache-dir -r requirements-server.txt
+
+COPY app_visualize.py api_service.py gateway_download.py vcb_case_library_direct.py raw_data_catalog.py iceberg_raw_reader.py llm_api_tool.py work_order_fault_extractor.py scheduled_work_order_sync.py ./
+COPY gateway_metrics.json ./
+COPY assets ./assets
+COPY knowledge_graph/vcb_trip_knowledge_graph.json ./knowledge_graph/vcb_trip_knowledge_graph.json
+COPY fault_extractor/fault_extractor ./fault_extractor/fault_extractor
+COPY 工单.xls 工单.xlsx 1757变量名称补充.xlsx ./
+
+EXPOSE 8050
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD python -c "import urllib.request; raise SystemExit(0 if urllib.request.urlopen('http://127.0.0.1:8050/', timeout=3).status == 200 else 1)"
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8050", "--workers", "1", "--worker-class", "gthread", "--threads", "4", "--timeout", "1800", "--graceful-timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "app_visualize:server"]

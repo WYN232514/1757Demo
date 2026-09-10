@@ -13,18 +13,21 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import json
+import math
 import os
 import re
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from datetime import date, timedelta
 from functools import lru_cache
 from io import StringIO
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import pandas as pd
 import requests
@@ -33,11 +36,21 @@ import requests
 GATEWAY = "https://phm.railiverse.com/gateway/"
 DEFAULT_DATA_DIR = "01_数据整理"
 DEFAULT_OUTPUT_ROOT = "gateway_downloads/queries"
-DEFAULT_BEFORE_MIN = 30
-DEFAULT_AFTER_MIN = 30
-# The external API is known to accept one metric per request. Keep this
-# conservative default for the production query flow; CLI callers can raise it.
-DEFAULT_BATCH_SIZE = 1
+DEFAULT_BEFORE_MIN = float(os.getenv("GATEWAY_BEFORE_MIN", "1"))
+DEFAULT_AFTER_MIN = float(os.getenv("GATEWAY_AFTER_MIN", "0.5"))
+def _positive_int_env(name: str, default: int) -> int:
+    try:
+        return max(1, int(os.getenv(name, str(default))))
+    except (TypeError, ValueError):
+        return default
+
+
+# Keep gateway requests small enough to avoid one large response blocking the
+# whole Dash callback. A normal 28-metric car query becomes three concurrent
+# batches, which retains parallel download without overwhelming the gateway.
+DEFAULT_BATCH_SIZE = _positive_int_env("GATEWAY_BATCH_SIZE", 10)
+DEFAULT_DOWNLOAD_WORKERS = _positive_int_env("GATEWAY_DOWNLOAD_WORKERS", 6)
+_GATEWAY_REQUEST_SLOTS = threading.BoundedSemaphore(DEFAULT_DOWNLOAD_WORKERS)
 STANDARD_COLUMNS = [
     "_time",
     "_value",
@@ -56,6 +69,8 @@ class FaultDownloadResult:
     metric_count: int
     requested_start_utc: pd.Timestamp
     requested_end_utc: pd.Timestamp
+    before_min: float
+    after_min: float
     files: tuple[Path, ...]
     reused: bool = False
 
@@ -379,17 +394,20 @@ def download_fault_window(
     fault_time: Any,
     *,
     time_is_cst: bool = True,
-    before_min: int = DEFAULT_BEFORE_MIN,
-    after_min: int = DEFAULT_AFTER_MIN,
+    before_min: float = DEFAULT_BEFORE_MIN,
+    after_min: float = DEFAULT_AFTER_MIN,
     fault_code: str = "",
     endpoint: str | None = None,
     metrics_json: str | None = None,
+    metric_codes: Sequence[str] | None = None,
+    metric_definitions: Sequence[Mapping[str, Any]] | None = None,
     metrics_data_dir: str = DEFAULT_DATA_DIR,
     output_root: str | Path = DEFAULT_OUTPUT_ROOT,
     train_type: str = "Rotem",
     batch_size: int = DEFAULT_BATCH_SIZE,
     timeout: int = 180,
     retries: int = 2,
+    workers: int = DEFAULT_DOWNLOAD_WORKERS,
     reuse: bool = True,
     session: requests.Session | None = None,
 ) -> FaultDownloadResult:
@@ -399,14 +417,44 @@ def download_fault_window(
     if pd.isna(fault_local):
         raise ValueError(f"故障时间格式错误: {fault_time!r}")
     fault_utc = fault_local - pd.Timedelta(hours=8) if time_is_cst else fault_local
-    start_utc = fault_utc - pd.Timedelta(minutes=int(before_min))
-    end_utc = fault_utc + pd.Timedelta(minutes=int(after_min))
+    before_min = float(before_min)
+    after_min = float(after_min)
+    if not math.isfinite(before_min) or before_min <= 0:
+        raise ValueError("故障前下载时间必须大于 0 分钟")
+    if not math.isfinite(after_min) or after_min <= 0:
+        raise ValueError("故障后下载时间必须大于 0 分钟")
+    start_utc = fault_utc - pd.Timedelta(minutes=before_min)
+    end_utc = fault_utc + pd.Timedelta(minutes=after_min)
     # The external endpoint accepts Beijing time, while point timestamps in its
     # JSON response are UTC (ISO strings ending in Z).
     gateway_start_cst = start_utc + pd.Timedelta(hours=8)
     gateway_end_cst = end_utc + pd.Timedelta(hours=8)
 
-    metrics = load_metrics(metrics_json, metrics_data_dir)
+    if metric_definitions is None:
+        metrics = load_metrics(metrics_json, metrics_data_dir)
+    else:
+        metrics = []
+        for item in metric_definitions:
+            code = str(item.get("code", "")).strip()
+            if not code:
+                continue
+            metrics.append({
+                "code": code,
+                "equipUnit": str(
+                    item.get("equipUnit", item.get("coach", coach_from_code(code)))
+                ).strip(),
+            })
+        if not metrics:
+            raise ValueError("metric_definitions 必须包含至少一个有效 code")
+    if metric_codes is not None:
+        allowed_codes = {
+            str(code).strip()
+            for code in metric_codes
+            if str(code).strip()
+        }
+        metrics = [metric for metric in metrics if metric["code"] in allowed_codes]
+        if not metrics:
+            raise ValueError("测点过滤后为空，请检查车厢号和案例库节点配置")
     output_dir = Path(output_root) / _query_key(train, start_utc, end_utc)
     manifest_path = output_dir / "manifest.json"
     manifest_base = {
@@ -415,9 +463,10 @@ def download_fault_window(
         "time_is_cst": bool(time_is_cst),
         "start_utc": str(start_utc),
         "end_utc": str(end_utc),
-        "before_min": int(before_min),
-        "after_min": int(after_min),
+        "before_min": before_min,
+        "after_min": after_min,
         "metric_count": len(metrics),
+        "metric_codes": [metric["code"] for metric in metrics],
         "fault_code": str(fault_code or "").strip(),
     }
     expected_files = tuple(
@@ -434,6 +483,8 @@ def download_fault_window(
             metric_count=len(metrics),
             requested_start_utc=start_utc,
             requested_end_utc=end_utc,
+            before_min=before_min,
+            after_min=after_min,
             files=expected_files,
             reused=True,
         )
@@ -448,28 +499,63 @@ def download_fault_window(
         "Connection": "close",
     }
 
-    frames: list[pd.DataFrame] = []
-    own_session = session is None
-    active_session = session or requests.Session()
-    try:
-        groups = list(batched(metrics, int(batch_size)))
+    groups = list(batched(metrics, int(batch_size)))
+    worker_count = min(max(1, int(workers)), len(groups))
+    if session is not None and worker_count > 1:
+        # requests.Session is not guaranteed to be thread-safe.  A caller that
+        # explicitly supplies one keeps the historical sequential behaviour.
+        print("检测到外部 requests.Session，并行下载已自动降为 1。")
+        worker_count = 1
+
+    def fetch_group(index: int, group: list[Any]) -> tuple[int, pd.DataFrame]:
+        payload = {
+            "equipModel": train_type,
+            "equipInstance": train,
+            "startTime": gateway_start_cst.strftime("%Y-%m-%d %H:%M:%S"),
+            "endTime": gateway_end_cst.strftime("%Y-%m-%d %H:%M:%S"),
+            "metrics": group,
+            "paramType": "METRIC",
+        }
+        with _GATEWAY_REQUEST_SLOTS:
+            if session is not None:
+                response = post_csv(
+                    session, endpoint_value, headers, payload, int(timeout), int(retries)
+                )
+            else:
+                with requests.Session() as current_session:
+                    response = post_csv(
+                        current_session, endpoint_value, headers, payload, int(timeout), int(retries)
+                    )
+        return index, parse_gateway_csv(response.content, group, train)
+
+    print(
+        f"网关下载：{train}，测点 {len(metrics)} 个，批次 {len(groups)} 个，"
+        f"并发 {worker_count}。"
+    )
+    ordered_frames: dict[int, pd.DataFrame] = {}
+    if worker_count == 1:
         for index, group in enumerate(groups, start=1):
-            payload = {
-                "equipModel": train_type,
-                "equipInstance": train,
-                "startTime": gateway_start_cst.strftime("%Y-%m-%d %H:%M:%S"),
-                "endTime": gateway_end_cst.strftime("%Y-%m-%d %H:%M:%S"),
-                "metrics": group,
-                "paramType": "METRIC",
-            }
-            print(f"网关下载 [{index}/{len(groups)}] {train}，测点 {len(group)} 个")
-            response = post_csv(
-                active_session, endpoint_value, headers, payload, int(timeout), int(retries)
-            )
-            frames.append(parse_gateway_csv(response.content, group, train))
-    finally:
-        if own_session:
-            active_session.close()
+            frame_index, frame = fetch_group(index, group)
+            ordered_frames[frame_index] = frame
+            print(f"网关下载完成 [{index}/{len(groups)}]，测点 {len(group)} 个")
+    else:
+        futures = {}
+        with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="gateway") as executor:
+            for index, group in enumerate(groups, start=1):
+                futures[executor.submit(fetch_group, index, group)] = (index, group)
+            completed = 0
+            try:
+                for future in as_completed(futures):
+                    frame_index, frame = future.result()
+                    ordered_frames[frame_index] = frame
+                    completed += 1
+                    print(f"网关下载完成 [{completed}/{len(groups)}]")
+            except Exception:
+                for pending in futures:
+                    pending.cancel()
+                raise
+
+    frames = [ordered_frames[index] for index in sorted(ordered_frames)]
 
     if not frames:
         raise RuntimeError("网关没有返回任何数据")
@@ -491,6 +577,8 @@ def download_fault_window(
         metric_count=len(metrics),
         requested_start_utc=start_utc,
         requested_end_utc=end_utc,
+        before_min=before_min,
+        after_min=after_min,
         files=files,
         reused=False,
     )
@@ -502,8 +590,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fault-time", required=True, help="故障时间 YYYY-MM-DD HH:MM:SS")
     parser.add_argument("--fault-code", default="", help="故障码，仅写入查询清单")
     parser.add_argument("--time-is-utc", action="store_true", help="输入时间已经是 UTC；默认按北京时间")
-    parser.add_argument("--before-min", type=int, default=DEFAULT_BEFORE_MIN)
-    parser.add_argument("--after-min", type=int, default=DEFAULT_AFTER_MIN)
+    parser.add_argument("--before-min", type=float, default=DEFAULT_BEFORE_MIN)
+    parser.add_argument("--after-min", type=float, default=DEFAULT_AFTER_MIN)
     parser.add_argument("--endpoint", default=os.getenv("RAILIVERSE_ENDPOINT", ""))
     parser.add_argument("--metrics-json")
     parser.add_argument("--metrics-data-dir", default=DEFAULT_DATA_DIR)
@@ -512,6 +600,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument("--workers", type=int, default=DEFAULT_DOWNLOAD_WORKERS)
     parser.add_argument("--force", action="store_true", help="忽略已有同窗口缓存，重新下载")
     return parser.parse_args()
 
@@ -533,6 +622,7 @@ def main() -> int:
         batch_size=args.batch_size,
         timeout=args.timeout,
         retries=args.retries,
+        workers=args.workers,
         reuse=not args.force,
     )
     action = "复用缓存" if result.reused else "下载完成"

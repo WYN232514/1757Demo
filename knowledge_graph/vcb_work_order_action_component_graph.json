@@ -1,0 +1,1463 @@
+{
+  "meta": {
+    "title": "VCB Trip 工单维修知识图谱",
+    "source_file": "vcb_trip_knowledge_graph.json",
+    "generated_at": "2026-07-29T18:05:37+08:00",
+    "work_order_count": 16,
+    "method_count": 7,
+    "component_count": 12,
+    "edge_count": 74,
+    "graph_scope": "vcb_trip",
+    "root_id": "vcb_trip",
+    "node_count": 36
+  },
+  "nodes": [
+    {
+      "id": "vcb_trip",
+      "type": "root",
+      "label": "vcb_trip",
+      "name": "vcb_trip"
+    },
+    {
+      "id": "work_order:5001331067",
+      "type": "work_order",
+      "label": "工单 5001331067",
+      "work_order": "5001331067",
+      "train": "T25",
+      "car_no": "9",
+      "fault": "P073 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001774280",
+      "type": "work_order",
+      "label": "工单 5001774280",
+      "work_order": "5001774280",
+      "train": "T1",
+      "car_no": "2",
+      "fault": "P003 VCB tripped"
+    },
+    {
+      "id": "work_order:5001505634",
+      "type": "work_order",
+      "label": "工单 5001505634",
+      "work_order": "5001505634",
+      "train": "T1",
+      "car_no": "2",
+      "fault": "P003 VCB tripped and failed to close"
+    },
+    {
+      "id": "work_order:5001284125",
+      "type": "work_order",
+      "label": "工单 5001284125",
+      "work_order": "5001284125",
+      "train": "T11",
+      "car_no": "9",
+      "fault": "P031 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001293500",
+      "type": "work_order",
+      "label": "工单 5001293500",
+      "work_order": "5001293500",
+      "train": "T11",
+      "car_no": "9",
+      "fault": "P031 VCB tripped"
+    },
+    {
+      "id": "work_order:5001340533",
+      "type": "work_order",
+      "label": "工单 5001340533",
+      "work_order": "5001340533",
+      "train": "T25",
+      "car_no": "9",
+      "fault": "P073 VCB tripped"
+    },
+    {
+      "id": "work_order:5001406566",
+      "type": "work_order",
+      "label": "工单 5001406566",
+      "work_order": "5001406566",
+      "train": "T15",
+      "car_no": "2",
+      "fault": "P045 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001453818",
+      "type": "work_order",
+      "label": "工单 5001453818",
+      "work_order": "5001453818",
+      "train": "T15",
+      "car_no": "2",
+      "fault": "P045 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001468561",
+      "type": "work_order",
+      "label": "工单 5001468561",
+      "work_order": "5001468561",
+      "train": "T15",
+      "car_no": "2",
+      "fault": "P045 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001504492",
+      "type": "work_order",
+      "label": "工单 5001504492",
+      "work_order": "5001504492",
+      "train": "T19",
+      "car_no": "9",
+      "fault": "P055 VCB tripped"
+    },
+    {
+      "id": "work_order:5001505712",
+      "type": "work_order",
+      "label": "工单 5001505712",
+      "work_order": "5001505712",
+      "train": "T25",
+      "car_no": "9",
+      "fault": "P073 VCB tripped"
+    },
+    {
+      "id": "work_order:5001544878",
+      "type": "work_order",
+      "label": "工单 5001544878",
+      "work_order": "5001544878",
+      "train": "T25",
+      "car_no": "9",
+      "fault": "P073 VCB tripped"
+    },
+    {
+      "id": "work_order:5001587808",
+      "type": "work_order",
+      "label": "工单 5001587808",
+      "work_order": "5001587808",
+      "train": "T36",
+      "car_no": "5",
+      "fault": "P107 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001603315",
+      "type": "work_order",
+      "label": "工单 5001603315",
+      "work_order": "5001603315",
+      "train": "T15",
+      "car_no": "5",
+      "fault": "P044 VCB tripped"
+    },
+    {
+      "id": "work_order:5001614276",
+      "type": "work_order",
+      "label": "工单 5001614276",
+      "work_order": "5001614276",
+      "train": "T9",
+      "car_no": "5",
+      "fault": "P026 VCB tripped repeatedly"
+    },
+    {
+      "id": "work_order:5001727589",
+      "type": "work_order",
+      "label": "工单 5001727589",
+      "work_order": "5001727589",
+      "train": "T16",
+      "car_no": "2",
+      "fault": "P048 VCB tripped"
+    },
+    {
+      "id": "method_category:function tested",
+      "type": "method",
+      "label": "功能测试",
+      "work_orders": [
+        "5001331067",
+        "5001774280"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:inspection_restore:apccr_ramfr_vcbcr",
+        "maintenance_group:inspection_restore:aps_converter",
+        "maintenance_group:inspection_restore:vcbstr_vcbctr_vcbhr_vdos"
+      ],
+      "member_methods": [
+        "功能测试 VCBCR",
+        "功能测试 RAMFR",
+        "功能测试 APCCR",
+        "功能测试 APS",
+        "功能测试 VCBHR",
+        "功能测试 VCBSTR",
+        "功能测试 VCBCTR"
+      ],
+      "affected_equipment": [
+        "VCBCR",
+        "RAMFR",
+        "APCCR",
+        "APS",
+        "VCBHR",
+        "VCBSTR",
+        "VCBCTR"
+      ]
+    },
+    {
+      "id": "method_category:checked",
+      "type": "method",
+      "label": "检查",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:inspection_restore:ci_converter_inverter_gcu",
+        "maintenance_group:inspection_restore:main_transformer_connections"
+      ],
+      "member_methods": [
+        "检查 C/I converter",
+        "检查 HTJB jumper",
+        "检查 main transformer",
+        "检查 main transformer cable lug",
+        "检查 main transformer cable"
+      ],
+      "affected_equipment": [
+        "C/I converter",
+        "HTJB jumper",
+        "main transformer",
+        "main transformer cable lug",
+        "main transformer cable"
+      ]
+    },
+    {
+      "id": "method_category:reset|checked|function tested",
+      "type": "method",
+      "label": "复位 / 检查 / 功能测试",
+      "work_orders": [
+        "5001331067",
+        "5001505634",
+        "5001284125",
+        "5001293500",
+        "5001340533",
+        "5001406566",
+        "5001453818",
+        "5001468561",
+        "5001504492",
+        "5001505712",
+        "5001544878",
+        "5001587808",
+        "5001603315",
+        "5001614276",
+        "5001727589",
+        "5001774280"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:inspection_restore:single_a85c2fd328e7",
+        "maintenance_group:inspection_restore:vcb_apc_atr"
+      ],
+      "member_methods": [
+        "检查 C/I",
+        "复位 C/I",
+        "功能测试 C/I",
+        "复位 VCB",
+        "检查 VCB",
+        "功能测试 ATR",
+        "功能测试 APC",
+        "功能测试 VCB"
+      ],
+      "affected_equipment": [
+        "C/I",
+        "VCB",
+        "ATR",
+        "APC"
+      ]
+    },
+    {
+      "id": "method_category:isolated",
+      "type": "method",
+      "label": "隔离",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:isolation:single_11c65a233dba",
+        "maintenance_group:isolation:single_a85c2fd328e7",
+        "maintenance_group:isolation:vcb_apc_atr"
+      ],
+      "member_methods": [
+        "隔离 pantograph",
+        "隔离 C/I",
+        "隔离 VCB"
+      ],
+      "affected_equipment": [
+        "pantograph",
+        "C/I",
+        "VCB"
+      ]
+    },
+    {
+      "id": "method_category:repaired",
+      "type": "method",
+      "label": "修复",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:repair:main_transformer_connections"
+      ],
+      "member_methods": [
+        "修复 main transformer cable lug",
+        "修复 main transformer"
+      ],
+      "affected_equipment": [
+        "main transformer cable lug",
+        "main transformer"
+      ]
+    },
+    {
+      "id": "method_category:replaced",
+      "type": "method",
+      "label": "更换",
+      "work_orders": [
+        "5001293500",
+        "5001331067",
+        "5001614276",
+        "5001284125",
+        "5001774280",
+        "5001406566",
+        "5001505712",
+        "5001587808",
+        "5001453818",
+        "5001505634",
+        "5001468561",
+        "5001340533"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:replacement:apc_controller_receiver",
+        "maintenance_group:replacement:apccr_ramfr_vcbcr",
+        "maintenance_group:replacement:aps_converter",
+        "maintenance_group:replacement:atr_controller_receiver",
+        "maintenance_group:replacement:ci_converter_inverter_gcu",
+        "maintenance_group:replacement:epdr_pdr",
+        "maintenance_group:replacement:main_transformer_connections",
+        "maintenance_group:replacement:vcb_apc_atr",
+        "maintenance_group:replacement:vcbstr_vcbctr_vcbhr_vdos"
+      ],
+      "member_methods": [
+        "更换 APC controller",
+        "更换 APC receiver",
+        "更换 RAMFR",
+        "更换 APCCR",
+        "更换 VCBCR",
+        "更换 APS Converter unit",
+        "更换 ATR controller",
+        "更换 ATR receiver",
+        "更换 C/I GCU",
+        "更换 C/I converter",
+        "更换 C/I inverter",
+        "更换 C/I converter & inverter power unit",
+        "更换 C/I Inverter power unit",
+        "更换 EPDR",
+        "更换 PDR",
+        "更换 main transformer cable lug",
+        "更换 VCB",
+        "更换 VDOS",
+        "更换 VCBSTR",
+        "更换 VCBCTR"
+      ],
+      "affected_equipment": [
+        "APC controller",
+        "APC receiver",
+        "RAMFR",
+        "APCCR",
+        "VCBCR",
+        "APS Converter unit",
+        "ATR controller",
+        "ATR receiver",
+        "C/I GCU",
+        "C/I converter",
+        "C/I inverter",
+        "C/I converter & inverter power unit",
+        "C/I Inverter power unit",
+        "EPDR",
+        "PDR",
+        "main transformer cable lug",
+        "VCB",
+        "VDOS",
+        "VCBSTR",
+        "VCBCTR"
+      ]
+    },
+    {
+      "id": "method_category:swapped",
+      "type": "method",
+      "label": "互换测试",
+      "work_orders": [
+        "5001505634",
+        "5001406566"
+      ],
+      "canonical_node_ids": [
+        "maintenance_group:swap_test:ci_converter_inverter_gcu",
+        "maintenance_group:swap_test:ovt_igbt",
+        "maintenance_group:swap_test:vcbstr_vcbctr_vcbhr_vdos"
+      ],
+      "member_methods": [
+        "互换测试 C/I converter",
+        "互换测试 OVT unit",
+        "互换测试 VDOS"
+      ],
+      "affected_equipment": [
+        "C/I converter",
+        "OVT unit",
+        "VDOS"
+      ]
+    },
+    {
+      "id": "equipment_group:apc_controller_receiver",
+      "type": "component",
+      "label": "APC controller / APC receiver",
+      "work_orders": [
+        "5001293500",
+        "5001331067",
+        "5001614276"
+      ],
+      "member_equipment": [
+        "APC controller",
+        "APC receiver"
+      ]
+    },
+    {
+      "id": "equipment_group:apccr_ramfr_vcbcr",
+      "type": "component",
+      "label": "APCCR / RAMFR / VCBCR",
+      "work_orders": [
+        "5001331067",
+        "5001284125",
+        "5001614276"
+      ],
+      "member_equipment": [
+        "RAMFR",
+        "APCCR",
+        "VCBCR"
+      ]
+    },
+    {
+      "id": "equipment_group:aps_converter",
+      "type": "component",
+      "label": "APS / APS Converter unit",
+      "work_orders": [
+        "5001774280"
+      ],
+      "member_equipment": [
+        "APS Converter unit",
+        "APS"
+      ]
+    },
+    {
+      "id": "equipment_group:atr_controller_receiver",
+      "type": "component",
+      "label": "ATR controller / ATR receiver",
+      "work_orders": [
+        "5001331067",
+        "5001406566",
+        "5001505712",
+        "5001587808"
+      ],
+      "member_equipment": [
+        "ATR controller",
+        "ATR receiver"
+      ]
+    },
+    {
+      "id": "equipment_group:ci_converter_inverter_gcu",
+      "type": "component",
+      "label": "C/I converter / C/I inverter / C/I GCU",
+      "work_orders": [
+        "5001505634",
+        "5001453818"
+      ],
+      "member_equipment": [
+        "C/I GCU",
+        "C/I converter",
+        "C/I inverter",
+        "C/I converter & inverter power unit",
+        "C/I Inverter power unit"
+      ]
+    },
+    {
+      "id": "equipment_group:epdr_pdr",
+      "type": "component",
+      "label": "EPDR / PDR",
+      "work_orders": [
+        "5001284125"
+      ],
+      "member_equipment": [
+        "EPDR",
+        "PDR"
+      ]
+    },
+    {
+      "id": "equipment_group:main_transformer_connections",
+      "type": "component",
+      "label": "main transformer / cable / cable lug / terminal wire / HTJB jumper",
+      "work_orders": [
+        "5001505634"
+      ],
+      "member_equipment": [
+        "main transformer terminal wire",
+        "main transformer cable lug",
+        "HTJB jumper",
+        "main transformer",
+        "main transformer cable"
+      ]
+    },
+    {
+      "id": "equipment_group:ovt_igbt",
+      "type": "component",
+      "label": "OVT unit / converter IGBT module",
+      "work_orders": [
+        "5001505634"
+      ],
+      "member_equipment": [
+        "OVT unit",
+        "converter IGBT module"
+      ]
+    },
+    {
+      "id": "equipment_group:single_11c65a233dba",
+      "type": "component",
+      "label": "pantograph",
+      "work_orders": [
+        "5001505634"
+      ],
+      "member_equipment": [
+        "pantograph"
+      ]
+    },
+    {
+      "id": "equipment_group:single_a85c2fd328e7",
+      "type": "component",
+      "label": "C/I",
+      "work_orders": [
+        "5001331067",
+        "5001505634"
+      ],
+      "member_equipment": [
+        "C/I"
+      ]
+    },
+    {
+      "id": "equipment_group:vcb_apc_atr",
+      "type": "component",
+      "label": "VCB / APC / ATR",
+      "work_orders": [
+        "5001284125",
+        "5001293500",
+        "5001331067",
+        "5001340533",
+        "5001406566",
+        "5001453818",
+        "5001468561",
+        "5001504492",
+        "5001505634",
+        "5001505712",
+        "5001544878",
+        "5001587808",
+        "5001603315",
+        "5001614276",
+        "5001727589",
+        "5001774280"
+      ],
+      "member_equipment": [
+        "VCB",
+        "ATR",
+        "APC"
+      ]
+    },
+    {
+      "id": "equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "type": "component",
+      "label": "VCBSTR / VCBCTR / VCBHR / VDOS",
+      "work_orders": [
+        "5001331067",
+        "5001340533",
+        "5001406566"
+      ],
+      "member_equipment": [
+        "VCBHR",
+        "VCBSTR",
+        "VCBCTR",
+        "VDOS"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "root:vcb_trip->work_order:5001331067",
+      "source": "vcb_trip",
+      "target": "work_order:5001331067",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001331067"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001774280",
+      "source": "vcb_trip",
+      "target": "work_order:5001774280",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001774280"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001505634",
+      "source": "vcb_trip",
+      "target": "work_order:5001505634",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001505634"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001284125",
+      "source": "vcb_trip",
+      "target": "work_order:5001284125",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001284125"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001293500",
+      "source": "vcb_trip",
+      "target": "work_order:5001293500",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001293500"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001340533",
+      "source": "vcb_trip",
+      "target": "work_order:5001340533",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001340533"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001406566",
+      "source": "vcb_trip",
+      "target": "work_order:5001406566",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001406566"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001453818",
+      "source": "vcb_trip",
+      "target": "work_order:5001453818",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001453818"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001468561",
+      "source": "vcb_trip",
+      "target": "work_order:5001468561",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001468561"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001504492",
+      "source": "vcb_trip",
+      "target": "work_order:5001504492",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001504492"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001505712",
+      "source": "vcb_trip",
+      "target": "work_order:5001505712",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001505712"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001544878",
+      "source": "vcb_trip",
+      "target": "work_order:5001544878",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001544878"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001587808",
+      "source": "vcb_trip",
+      "target": "work_order:5001587808",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001587808"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001603315",
+      "source": "vcb_trip",
+      "target": "work_order:5001603315",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001603315"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001614276",
+      "source": "vcb_trip",
+      "target": "work_order:5001614276",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001614276"
+      ]
+    },
+    {
+      "id": "root:vcb_trip->work_order:5001727589",
+      "source": "vcb_trip",
+      "target": "work_order:5001727589",
+      "type": "root_to_work_order",
+      "work_orders": [
+        "5001727589"
+      ]
+    },
+    {
+      "id": "display:work_order:5001331067->method_category:function tested",
+      "source": "work_order:5001331067",
+      "target": "method_category:function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001331067"
+      ],
+      "canonical_edge_ids": [
+        "edge:f5d6b1a1dfb34b",
+        "edge:50312f9f304ee5"
+      ]
+    },
+    {
+      "id": "display:work_order:5001774280->method_category:function tested",
+      "source": "work_order:5001774280",
+      "target": "method_category:function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:0203076733a309"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:checked",
+      "source": "work_order:5001505634",
+      "target": "method_category:checked",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:20e1b9f5be5003",
+        "edge:da7c58eb8817b6"
+      ]
+    },
+    {
+      "id": "display:work_order:5001331067->method_category:reset|checked|function tested",
+      "source": "work_order:5001331067",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001331067"
+      ],
+      "canonical_edge_ids": [
+        "edge:d9d758a43162a0",
+        "edge:82aaffc5bdc583"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:reset|checked|function tested",
+      "source": "work_order:5001505634",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:816a8f79355e0e",
+        "edge:60a6cd0486b62a"
+      ]
+    },
+    {
+      "id": "display:work_order:5001284125->method_category:reset|checked|function tested",
+      "source": "work_order:5001284125",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001284125"
+      ],
+      "canonical_edge_ids": [
+        "edge:50d698649e9893"
+      ]
+    },
+    {
+      "id": "display:work_order:5001293500->method_category:reset|checked|function tested",
+      "source": "work_order:5001293500",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001293500"
+      ],
+      "canonical_edge_ids": [
+        "edge:3331813195b7ce"
+      ]
+    },
+    {
+      "id": "display:work_order:5001340533->method_category:reset|checked|function tested",
+      "source": "work_order:5001340533",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001340533"
+      ],
+      "canonical_edge_ids": [
+        "edge:d928f4f6049ed4"
+      ]
+    },
+    {
+      "id": "display:work_order:5001406566->method_category:reset|checked|function tested",
+      "source": "work_order:5001406566",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001406566"
+      ],
+      "canonical_edge_ids": [
+        "edge:0b0987173c7eff"
+      ]
+    },
+    {
+      "id": "display:work_order:5001453818->method_category:reset|checked|function tested",
+      "source": "work_order:5001453818",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001453818"
+      ],
+      "canonical_edge_ids": [
+        "edge:948a6e1eb687f5"
+      ]
+    },
+    {
+      "id": "display:work_order:5001468561->method_category:reset|checked|function tested",
+      "source": "work_order:5001468561",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001468561"
+      ],
+      "canonical_edge_ids": [
+        "edge:af0f56551d80df"
+      ]
+    },
+    {
+      "id": "display:work_order:5001504492->method_category:reset|checked|function tested",
+      "source": "work_order:5001504492",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001504492"
+      ],
+      "canonical_edge_ids": [
+        "edge:8f28b243793820"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505712->method_category:reset|checked|function tested",
+      "source": "work_order:5001505712",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505712"
+      ],
+      "canonical_edge_ids": [
+        "edge:244785087993f2"
+      ]
+    },
+    {
+      "id": "display:work_order:5001544878->method_category:reset|checked|function tested",
+      "source": "work_order:5001544878",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001544878"
+      ],
+      "canonical_edge_ids": [
+        "edge:ead62e851e8034"
+      ]
+    },
+    {
+      "id": "display:work_order:5001587808->method_category:reset|checked|function tested",
+      "source": "work_order:5001587808",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001587808"
+      ],
+      "canonical_edge_ids": [
+        "edge:6b18a7bd54af8a"
+      ]
+    },
+    {
+      "id": "display:work_order:5001603315->method_category:reset|checked|function tested",
+      "source": "work_order:5001603315",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001603315"
+      ],
+      "canonical_edge_ids": [
+        "edge:48b307426849be"
+      ]
+    },
+    {
+      "id": "display:work_order:5001614276->method_category:reset|checked|function tested",
+      "source": "work_order:5001614276",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001614276"
+      ],
+      "canonical_edge_ids": [
+        "edge:474b055e466727"
+      ]
+    },
+    {
+      "id": "display:work_order:5001727589->method_category:reset|checked|function tested",
+      "source": "work_order:5001727589",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001727589"
+      ],
+      "canonical_edge_ids": [
+        "edge:2a347fba74a5d7"
+      ]
+    },
+    {
+      "id": "display:work_order:5001774280->method_category:reset|checked|function tested",
+      "source": "work_order:5001774280",
+      "target": "method_category:reset|checked|function tested",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:920585bf84193e"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:isolated",
+      "source": "work_order:5001505634",
+      "target": "method_category:isolated",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:2ed380f6c860a3",
+        "edge:3143d0f76c269b",
+        "edge:4f71ce0932c298"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:repaired",
+      "source": "work_order:5001505634",
+      "target": "method_category:repaired",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:5d4ec10e97361b"
+      ]
+    },
+    {
+      "id": "display:work_order:5001293500->method_category:replaced",
+      "source": "work_order:5001293500",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001293500"
+      ],
+      "canonical_edge_ids": [
+        "edge:91df48801781e4"
+      ]
+    },
+    {
+      "id": "display:work_order:5001331067->method_category:replaced",
+      "source": "work_order:5001331067",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001331067"
+      ],
+      "canonical_edge_ids": [
+        "edge:6f90f5db4d5d51",
+        "edge:e658fd123c2e55"
+      ]
+    },
+    {
+      "id": "display:work_order:5001614276->method_category:replaced",
+      "source": "work_order:5001614276",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001614276"
+      ],
+      "canonical_edge_ids": [
+        "edge:b06afc14f6cb51",
+        "edge:02819e9ef050a7"
+      ]
+    },
+    {
+      "id": "display:work_order:5001284125->method_category:replaced",
+      "source": "work_order:5001284125",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001284125"
+      ],
+      "canonical_edge_ids": [
+        "edge:ff35f97f1bb1e1",
+        "edge:068d0b2dd102e2"
+      ]
+    },
+    {
+      "id": "display:work_order:5001774280->method_category:replaced",
+      "source": "work_order:5001774280",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:6b8730316dbe44"
+      ]
+    },
+    {
+      "id": "display:work_order:5001406566->method_category:replaced",
+      "source": "work_order:5001406566",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001406566"
+      ],
+      "canonical_edge_ids": [
+        "edge:640e1dc861890a",
+        "edge:eb5452369a37bb"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505712->method_category:replaced",
+      "source": "work_order:5001505712",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505712"
+      ],
+      "canonical_edge_ids": [
+        "edge:61f47288815616"
+      ]
+    },
+    {
+      "id": "display:work_order:5001587808->method_category:replaced",
+      "source": "work_order:5001587808",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001587808"
+      ],
+      "canonical_edge_ids": [
+        "edge:2118fe9da53aa5"
+      ]
+    },
+    {
+      "id": "display:work_order:5001453818->method_category:replaced",
+      "source": "work_order:5001453818",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001453818"
+      ],
+      "canonical_edge_ids": [
+        "edge:e6cb0f641521d1"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:replaced",
+      "source": "work_order:5001505634",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:0a3cb1cf0c3693",
+        "edge:776899569fbd6d"
+      ]
+    },
+    {
+      "id": "display:work_order:5001468561->method_category:replaced",
+      "source": "work_order:5001468561",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001468561"
+      ],
+      "canonical_edge_ids": [
+        "edge:104c20b016e46a"
+      ]
+    },
+    {
+      "id": "display:work_order:5001340533->method_category:replaced",
+      "source": "work_order:5001340533",
+      "target": "method_category:replaced",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001340533"
+      ],
+      "canonical_edge_ids": [
+        "edge:63daec7edde740"
+      ]
+    },
+    {
+      "id": "display:work_order:5001505634->method_category:swapped",
+      "source": "work_order:5001505634",
+      "target": "method_category:swapped",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:7ac3c180ee5108",
+        "edge:5e8fd71e1dcab0"
+      ]
+    },
+    {
+      "id": "display:work_order:5001406566->method_category:swapped",
+      "source": "work_order:5001406566",
+      "target": "method_category:swapped",
+      "type": "work_order_to_method",
+      "work_orders": [
+        "5001406566"
+      ],
+      "canonical_edge_ids": [
+        "edge:71ffe7e550ea5a"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:apc_controller_receiver",
+      "source": "method_category:replaced",
+      "target": "equipment_group:apc_controller_receiver",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001293500",
+        "5001331067",
+        "5001614276"
+      ],
+      "canonical_edge_ids": [
+        "edge:7cf522f0309152"
+      ]
+    },
+    {
+      "id": "display:method_category:function tested->equipment_group:apccr_ramfr_vcbcr",
+      "source": "method_category:function tested",
+      "target": "equipment_group:apccr_ramfr_vcbcr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001331067"
+      ],
+      "canonical_edge_ids": [
+        "edge:782736f670316b"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:apccr_ramfr_vcbcr",
+      "source": "method_category:replaced",
+      "target": "equipment_group:apccr_ramfr_vcbcr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001284125",
+        "5001614276"
+      ],
+      "canonical_edge_ids": [
+        "edge:fa62761d47167e"
+      ]
+    },
+    {
+      "id": "display:method_category:function tested->equipment_group:aps_converter",
+      "source": "method_category:function tested",
+      "target": "equipment_group:aps_converter",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:562963bc48f7d8"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:aps_converter",
+      "source": "method_category:replaced",
+      "target": "equipment_group:aps_converter",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:e3b8505d00d46e"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:atr_controller_receiver",
+      "source": "method_category:replaced",
+      "target": "equipment_group:atr_controller_receiver",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001331067",
+        "5001406566",
+        "5001505712",
+        "5001587808"
+      ],
+      "canonical_edge_ids": [
+        "edge:fe0550db2b3dd3"
+      ]
+    },
+    {
+      "id": "display:method_category:checked->equipment_group:ci_converter_inverter_gcu",
+      "source": "method_category:checked",
+      "target": "equipment_group:ci_converter_inverter_gcu",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:2dfb2565e0cd88"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:ci_converter_inverter_gcu",
+      "source": "method_category:replaced",
+      "target": "equipment_group:ci_converter_inverter_gcu",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001453818",
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:c51a8bc4f551c2"
+      ]
+    },
+    {
+      "id": "display:method_category:swapped->equipment_group:ci_converter_inverter_gcu",
+      "source": "method_category:swapped",
+      "target": "equipment_group:ci_converter_inverter_gcu",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:1d30e8df8945a1"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:epdr_pdr",
+      "source": "method_category:replaced",
+      "target": "equipment_group:epdr_pdr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001284125"
+      ],
+      "canonical_edge_ids": [
+        "edge:712e0453d80ead"
+      ]
+    },
+    {
+      "id": "display:method_category:checked->equipment_group:main_transformer_connections",
+      "source": "method_category:checked",
+      "target": "equipment_group:main_transformer_connections",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:66aa01cd9909a2"
+      ]
+    },
+    {
+      "id": "display:method_category:repaired->equipment_group:main_transformer_connections",
+      "source": "method_category:repaired",
+      "target": "equipment_group:main_transformer_connections",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:2e4643d60ee999"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:main_transformer_connections",
+      "source": "method_category:replaced",
+      "target": "equipment_group:main_transformer_connections",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:86e3a753119c84"
+      ]
+    },
+    {
+      "id": "display:method_category:swapped->equipment_group:ovt_igbt",
+      "source": "method_category:swapped",
+      "target": "equipment_group:ovt_igbt",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:c74d9ec5b060bc"
+      ]
+    },
+    {
+      "id": "display:method_category:isolated->equipment_group:single_11c65a233dba",
+      "source": "method_category:isolated",
+      "target": "equipment_group:single_11c65a233dba",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:0306b0fc0a5c5a"
+      ]
+    },
+    {
+      "id": "display:method_category:reset|checked|function tested->equipment_group:single_a85c2fd328e7",
+      "source": "method_category:reset|checked|function tested",
+      "target": "equipment_group:single_a85c2fd328e7",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001331067",
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:77686658ddee8c"
+      ]
+    },
+    {
+      "id": "display:method_category:isolated->equipment_group:single_a85c2fd328e7",
+      "source": "method_category:isolated",
+      "target": "equipment_group:single_a85c2fd328e7",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:a59cea3cbe1b2e"
+      ]
+    },
+    {
+      "id": "display:method_category:reset|checked|function tested->equipment_group:vcb_apc_atr",
+      "source": "method_category:reset|checked|function tested",
+      "target": "equipment_group:vcb_apc_atr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001284125",
+        "5001293500",
+        "5001331067",
+        "5001340533",
+        "5001406566",
+        "5001453818",
+        "5001468561",
+        "5001504492",
+        "5001505634",
+        "5001505712",
+        "5001544878",
+        "5001587808",
+        "5001603315",
+        "5001614276",
+        "5001727589",
+        "5001774280"
+      ],
+      "canonical_edge_ids": [
+        "edge:2691a9323049f3"
+      ]
+    },
+    {
+      "id": "display:method_category:isolated->equipment_group:vcb_apc_atr",
+      "source": "method_category:isolated",
+      "target": "equipment_group:vcb_apc_atr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001505634"
+      ],
+      "canonical_edge_ids": [
+        "edge:e0dfc6203d8dce"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:vcb_apc_atr",
+      "source": "method_category:replaced",
+      "target": "equipment_group:vcb_apc_atr",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001468561"
+      ],
+      "canonical_edge_ids": [
+        "edge:cb95a14d00c605"
+      ]
+    },
+    {
+      "id": "display:method_category:function tested->equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "source": "method_category:function tested",
+      "target": "equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001331067"
+      ],
+      "canonical_edge_ids": [
+        "edge:3f2862a0643f2b"
+      ]
+    },
+    {
+      "id": "display:method_category:replaced->equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "source": "method_category:replaced",
+      "target": "equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001340533",
+        "5001406566"
+      ],
+      "canonical_edge_ids": [
+        "edge:7b26c00bd99362"
+      ]
+    },
+    {
+      "id": "display:method_category:swapped->equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "source": "method_category:swapped",
+      "target": "equipment_group:vcbstr_vcbctr_vcbhr_vdos",
+      "type": "method_to_component",
+      "work_orders": [
+        "5001406566"
+      ],
+      "canonical_edge_ids": [
+        "edge:7c1f23632146d6"
+      ]
+    }
+  ]
+}

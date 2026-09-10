@@ -1,5 +1,6 @@
 01_数据整理/
 gateway_downloads/
+runtime/
 backups/
 分析文件/
 fault_extractor/**/__pycache__/
@@ -21,7 +22,11 @@ tests/
 *.ipynb
 *.xls
 *.xlsx
+!工单.xls
+!工单.xlsx
+!1757变量名称补充.xlsx
 config.yaml
+批量下载.py
 **/llm_api_config.json
 scratch_*
 *.rar

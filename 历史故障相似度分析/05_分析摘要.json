@@ -1,0 +1,13 @@
+{
+  "input": "C:\\Users\\thinkpad\\Desktop\\1757Demo\\历史故障列表 (1).xls",
+  "source_rows": 1749,
+  "station_filtered_rows": 151,
+  "status_counts": {
+    "ok": 133,
+    "no_usable_segment": 18
+  },
+  "cases_with_work_order_ge_0_8": 16,
+  "cases_with_work_order_ge_0_7": 19,
+  "cases_with_work_order_ge_0_6": 21,
+  "output_dir": "C:\\Users\\thinkpad\\Desktop\\1757Demo\\历史故障相似度分析"
+}

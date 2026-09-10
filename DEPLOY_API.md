@@ -4,7 +4,7 @@
 
 调用方只需提交车号、车厢号、故障时间和故障码。服务会自动：
 
-1. 从 Railiverse Gateway 下载该车组 109 个变量的故障前后各 30 分钟数据；
+1. 从 Railiverse Gateway 下载该车组 109 个变量的故障前后各 20 分钟数据；
 2. 生成与历史案例库相同口径的故障指纹；
 3. 查询并返回相似历史工单及相关解释字段。
 
@@ -146,11 +146,9 @@ http://<Docker主机IP>:8000/api/v1/fault-analysis
 
 ## 5. 数据与更新
 
-- `case_library` 通过只读 volume 挂载，新增真实工单入库后，API 会在下一次请求时
-  自动检测文件变化并重载，不需要重启容器。
+- 完整案例库保存在 Qdrant 主 collection 和配套的 `__meta` collection；前端/API 不挂载或读取本地 `case_library`。
 - 网关查询缓存挂载到 `gateway_downloads/docker`，相同车号和时间窗口会复用缓存。
-- API 查询使用本地 `case_library` 完成当前项目的最终相似度算法，不依赖 Qdrant
-  在线可用；Qdrant 仍用于现有入库同步和其他检索流程。
+- API 启动时从 Qdrant加载向量、metadata、node_index、segment 和工单详情；Qdrant 是唯一在线案例库数据源。
 
 更新代码或依赖后重新构建：
 

@@ -27,18 +27,22 @@ load_dotenv(ROOT / ".env")
 
 from app_visualize import (
     FAULT_EXTRACTOR_DIR,
-    FAULT_REFERENCE_DATA,
     build_fault_reference_report,
     compute_query,
+    gateway_metric_definitions,
+    gateway_metric_codes_for_car,
+    load_library,
     load_structured_work_order_records,
 )
-from gateway_download import download_fault_window, load_metrics
+from gateway_download import (
+    DEFAULT_AFTER_MIN,
+    DEFAULT_BEFORE_MIN,
+    download_fault_window,
+)
 
 
 API_VERSION = "1.2.0"
-METRICS_JSON = Path(os.getenv("GATEWAY_METRICS_JSON", ROOT / "gateway_metrics.json"))
 QUERY_ROOT = Path(os.getenv("GATEWAY_QUERY_ROOT", ROOT / "gateway_downloads" / "api_queries"))
-CASE_LIBRARY_DIR = Path(os.getenv("CASE_LIBRARY_DIR", ROOT / "case_library"))
 _QUERY_LOCK = threading.Lock()
 
 
@@ -50,6 +54,8 @@ class FaultAnalysisRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=20)
     similarity_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
     time_is_cst: bool = Field(default=True, description="默认输入为北京时间")
+    before_seconds: float = Field(default=DEFAULT_BEFORE_MIN * 60, gt=0, le=1800)
+    after_seconds: float = Field(default=DEFAULT_AFTER_MIN * 60, gt=0, le=1800)
     force_download: bool = Field(default=False, description="忽略相同窗口缓存并重新下载")
 
     @field_validator("train")
@@ -147,6 +153,9 @@ def similar_work_orders(q: dict[str, Any]) -> list[dict[str, Any]]:
             {
                 "rank": rank,
                 "similarity": json_safe(q["sims"][idx]),
+                "similarity_warning": json_safe(
+                    (q.get("similarity_warnings") or [""] * len(q["sims"]))[idx]
+                ),
                 "work_order": work_order,
             }
         )
@@ -197,9 +206,10 @@ def execute_fault_analysis(request: FaultAnalysisRequest) -> dict[str, Any]:
                 fault_time=request.fault_time,
                 fault_code=request.fault_code,
                 time_is_cst=request.time_is_cst,
-                before_min=30,
-                after_min=30,
-                metrics_json=str(METRICS_JSON),
+                before_min=request.before_seconds / 60.0,
+                after_min=request.after_seconds / 60.0,
+                metric_definitions=gateway_metric_definitions(),
+                metric_codes=gateway_metric_codes_for_car(request.car_no),
                 output_root=QUERY_ROOT,
                 reuse=not request.force_download,
             )
@@ -238,11 +248,15 @@ def execute_fault_analysis(request: FaultAnalysisRequest) -> dict[str, Any]:
             "fault_time": request.fault_time,
             "fault_code": request.fault_code,
             "time_is_cst": request.time_is_cst,
+            "before_seconds": request.before_seconds,
+            "after_seconds": request.after_seconds,
         },
         "download": {
             "reused": download.reused,
             "metric_count": download.metric_count,
             "row_count": download.row_count,
+            "before_min": download.before_min,
+            "after_seconds": download.after_min * 60,
             "start_utc": json_safe(download.requested_start_utc),
             "end_utc": json_safe(download.requested_end_utc),
         },
@@ -281,10 +295,15 @@ def root() -> dict[str, str]:
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    required = ["vectors.npy", "metadata.csv", "node_index.joblib", "segments.joblib"]
-    missing = [name for name in required if not (CASE_LIBRARY_DIR / name).exists()]
     try:
-        metric_count = len(load_metrics(str(METRICS_JSON)))
+        vectors, metadata, node_index = load_library()
+        qdrant_library_ready = bool(len(vectors) and len(metadata) and len(node_index))
+        qdrant_case_count = int(len(metadata))
+    except Exception:
+        qdrant_library_ready = False
+        qdrant_case_count = 0
+    try:
+        metric_count = len(gateway_metric_definitions())
     except Exception:
         metric_count = 0
     gateway_endpoint_configured = bool(os.getenv("RAILIVERSE_ENDPOINT", "").strip())
@@ -296,20 +315,21 @@ def health() -> dict[str, Any]:
         structured_work_order_count = len(load_structured_work_order_records())
     except Exception:
         structured_work_order_count = 0
-    fault_report_reference_configured = FAULT_REFERENCE_DATA.is_file()
+    fault_report_reference_configured = structured_work_order_count > 0
     fault_report_llm_configured = (
         FAULT_EXTRACTOR_DIR / "llm_api_config.json"
     ).is_file()
     return {
         "status": "ok" if (
-            not missing and metric_count > 0
+            qdrant_library_ready and metric_count > 0
             and gateway_endpoint_configured and gateway_credentials_configured
             and structured_work_order_count > 0
             and fault_report_reference_configured
         ) else "degraded",
         "version": API_VERSION,
-        "case_library_dir": str(CASE_LIBRARY_DIR),
-        "missing_case_library_files": missing,
+        "case_library_backend": "qdrant",
+        "qdrant_library_ready": qdrant_library_ready,
+        "qdrant_case_count": qdrant_case_count,
         "metric_count": metric_count,
         "gateway_endpoint_configured": gateway_endpoint_configured,
         "gateway_credentials_configured": gateway_credentials_configured,
