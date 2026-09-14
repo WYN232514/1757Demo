@@ -1,51 +1,42 @@
-/* Brighter work-order dialog, scoped to preserve the dashboard theme. */
-.work-order-status-dialog {
-    background: #15364d !important;
-    border-color: #5088a4 !important;
-}
-.work-order-status-head { background: #20475f !important; }
-.work-order-status-title { color: #fff; }
+/* Navy theme with explicit contrast overriding the global table theme. */
+.work-order-status-dialog { background: #0b2235 !important; border-color: #34576c !important; }
+.work-order-status-head { background: #102b40 !important; flex-shrink: 0; }
+.work-order-status-title { color: #f0f6fa; }
 .work-order-status-subtitle,
 .work-order-list-note,
-.work-order-list-stat span { color: #bdd9e8; }
-.work-order-list-stat { background: #234b63; border-color: #527e95; }
-.work-order-status-body .dash-table-container .dash-spreadsheet-inner td {
-    background-color: #24475d !important;
-    border-color: #42677d !important;
+.work-order-list-stat span { color: #a5bdce; }
+.work-order-list-stat { background: #132f44; border-color: #2d4b60; }
+#all_work_order_status_table .dash-spreadsheet-container .dash-spreadsheet-inner td {
+    background: #152d40 !important; color: #e6eff5 !important; border-color: #294356 !important;
 }
-.work-order-status-body .dash-table-container .dash-spreadsheet-inner tr:nth-child(even) td {
-    background-color: #2c5168 !important;
+#all_work_order_status_table .dash-spreadsheet-container .dash-spreadsheet-inner tr:nth-child(even) td {
+    background: #193347 !important;
 }
-.work-order-status-body .dash-table-container .dash-spreadsheet-inner th {
-    background-color: #365f77 !important;
-    color: #fff !important;
-    border-color: #527d96 !important;
+#all_work_order_status_table .dash-spreadsheet-container .dash-spreadsheet-inner th {
+    background: #233f53 !important; color: #f2f7fa !important; border-color: #345165 !important;
 }
-.work-order-status-body .dash-table-container .dash-filter input {
-    background: #24475d !important;
-    color: #fff !important;
-    border: 1px solid #7297ab !important;
-    border-radius: 4px;
-    padding: 5px !important;
+#all_work_order_status_table .dash-spreadsheet-container .dash-spreadsheet-inner tr:hover td,
+#all_work_order_status_table .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected {
+    background: #25465d !important;
 }
-.work-order-status-body .dash-table-container .dash-filter input::placeholder {
-    color: #c4dce9 !important;
+#all_work_order_status_table .dash-cell-value { color: inherit !important; }
+#all_work_order_status_table .dash-filter input {
+    background: #102739 !important; color: #f0f6fa !important;
+    -webkit-text-fill-color: #f0f6fa !important;
+    border: 1px solid #456276 !important; border-radius: 4px; padding: 5px !important;
 }
-.work-order-status-refresh,
-.work-order-status-close { background: #2d607b; color: #fff; border-color: #659ab5; }
+#all_work_order_status_table .dash-filter input::placeholder {
+    color: #a5bdce !important; -webkit-text-fill-color: #a5bdce !important; opacity: 1;
+}
+#all_work_order_status_table input[type="radio"] { accent-color: #72cdf5; }
 .work-order-delete-button {
-    border: 1px solid #ff9caa;
-    border-radius: 6px;
-    padding: 7px 12px;
-    color: #fff;
-    background: #97384c;
-    cursor: pointer;
+    border: 1px solid #ba6272; border-radius: 6px; padding: 7px 12px;
+    color: #fff; background: #793144; cursor: pointer;
 }
-.work-order-delete-button:disabled { opacity: .45; cursor: not-allowed; }
 .work-order-delete-button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
-.work-order-management-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 10px 0; color: #d9eaf3; }
-.work-order-management-message { padding: 8px 18px; color: #fff0c5; }
-.work-order-management-toolbar,
-.work-order-management-message,
-.work-order-status-head { flex-shrink: 0; }
+.work-order-management-toolbar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin: 10px 0; color: #e6eff5; flex-shrink: 0;
+}
+.work-order-management-message { padding: 8px 18px; color: #ffe0a3; flex-shrink: 0; }
 .work-order-management-message:empty { display: none; }

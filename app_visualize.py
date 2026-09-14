@@ -5208,7 +5208,7 @@ def load_all_work_order_statuses(force: bool = False) -> Dict[str, Any]:
         return result
 
 
-def render_work_order_status_list(snapshot: Mapping[str, Any]) -> html.Div:
+def render_work_order_status_list(snapshot: Mapping[str, Any], editing=False) -> html.Div:
     hidden = exclusions(WORK_ORDER_MANAGEMENT_PATH)
     rows = [dict(row, id=str(row["工单号"])) for row in snapshot.get("rows", [])
             if str(row["工单号"]) not in hidden]
@@ -5231,7 +5231,7 @@ def render_work_order_status_list(snapshot: Mapping[str, Any]) -> html.Div:
         dash_table.DataTable(
             id="all_work_order_status_table",
             data=rows,
-            row_selectable="single",
+            row_selectable="single" if editing else False,
             selected_rows=[],
             selected_row_ids=[],
             columns=[{"name": name, "id": name} for name in [
@@ -5295,6 +5295,7 @@ app.layout = html.Div(
         dcc.Store(id="session_id", storage_type="session", data=None),
         dcc.Store(id="work_order_delete_revision", data=None),
         dcc.Store(id="work_order_delete_pending", data=None),
+        dcc.Store(id="work_order_edit_mode", data=False),
         dcc.ConfirmDialog(id="work_order_delete_confirm"),
         dcc.Store(id="ts_selection", data=None),
         dcc.Store(id="query_revision", data=None),
@@ -5374,7 +5375,7 @@ app.layout = html.Div(
                     children=[
                         html.Div(className="work-order-status-head", children=[
                             html.Div([
-                                html.Div("工单列表", className="work-order-status-title"),
+                                html.Div("工单列表", id="work_order_list_title", className="work-order-status-title"),
                                 html.Div("WORK ORDER QDRANT STATUS", className="work-order-status-subtitle"),
                             ]),
                             html.Div(className="work-order-status-head-actions", children=[
@@ -5384,6 +5385,8 @@ app.layout = html.Div(
                                     n_clicks=0,
                                     className="work-order-status-refresh",
                                 ),
+                                html.Button("编辑", id="edit_work_order_status_list", n_clicks=0,
+                                            className="work-order-status-refresh"),
                                 html.Button(
                                     "×",
                                     id="close_work_order_status_list",
@@ -5401,7 +5404,7 @@ app.layout = html.Div(
                                 children=render_work_order_status_list({"rows": []}),
                             ),
                         ),
-                        html.Div(className="work-order-management-toolbar", style={"padding": "0 18px"}, children=[
+                        html.Div(id="work_order_edit_toolbar", className="work-order-management-toolbar", style={"display": "none"}, children=[
                             html.Span("选择一条工单后可删除："),
                             dcc.RadioItems(id="work_order_delete_scope", options=[
                                 {"label": "仅从列表移除", "value": "list"},
@@ -6437,13 +6440,34 @@ def toggle_work_order_status_modal(open_clicks, _close_clicks, _backdrop_clicks)
 
 
 @app.callback(
+    Output("work_order_edit_mode", "data"),
+    Output("edit_work_order_status_list", "children"),
+    Output("work_order_edit_toolbar", "style"),
+    Output("work_order_list_title", "children"),
+    Input("edit_work_order_status_list", "n_clicks"),
+    Input("open_work_order_status_list", "n_clicks"),
+    Input("close_work_order_status_list", "n_clicks"),
+    Input("work_order_status_modal_backdrop", "n_clicks"),
+    State("work_order_edit_mode", "data"),
+    prevent_initial_call=True,
+)
+def toggle_work_order_edit_mode(_edit, _open, _close, _backdrop, editing):
+    trigger = callback_context.triggered[0]["prop_id"].split(".")[0]
+    editing = not editing if trigger == "edit_work_order_status_list" else False
+    return (editing, "完成" if editing else "编辑",
+            {"padding": "0 18px", "display": "flex" if editing else "none"},
+            "编辑工单列表" if editing else "工单列表")
+
+
+@app.callback(
     Output("work_order_status_modal_content", "children"),
     Input("open_work_order_status_list", "n_clicks"),
     Input("refresh_work_order_status_list", "n_clicks"),
     Input("work_order_delete_revision", "data"),
+    Input("work_order_edit_mode", "data"),
     prevent_initial_call=True,
 )
-def update_work_order_status_modal(open_clicks, _refresh_clicks, _delete_revision):
+def update_work_order_status_modal(open_clicks, _refresh_clicks, _delete_revision, editing):
     if not open_clicks:
         raise PreventUpdate
     triggered = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else ""
@@ -6451,7 +6475,7 @@ def update_work_order_status_modal(open_clicks, _refresh_clicks, _delete_revisio
         snapshot = load_all_work_order_statuses(
             force=triggered == "refresh_work_order_status_list"
         )
-        return render_work_order_status_list(snapshot)
+        return render_work_order_status_list(snapshot, editing=editing)
     except Exception as exc:
         return html.Div(
             f"工单列表读取失败：{exc}",

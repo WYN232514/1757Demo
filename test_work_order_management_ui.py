@@ -45,7 +45,7 @@ class ManagementUITests(unittest.TestCase):
                        load_all_work_order_statuses=lambda: self.snapshot,
                        _load_qdrant_bundle=lambda: self.bundle)
         source = ast.parse(Path(__file__).with_name("app_visualize.py").read_text(encoding="utf-8"))
-        names = {"render_work_order_status_list", "manage_work_order_deletion", "load_library"}
+        names = {"render_work_order_status_list", "manage_work_order_deletion", "load_library", "toggle_work_order_edit_mode"}
         functions = [node for node in source.body if isinstance(node, ast.FunctionDef) and node.name in names]
         for function in functions:
             function.decorator_list = []
@@ -68,6 +68,24 @@ class ManagementUITests(unittest.TestCase):
         self.assertFalse(self.path.exists())
         self.call("work_order_delete_confirm.submit_n_clicks", token=result[2])
         self.assertFalse(self.path.exists())
+
+    def test_view_and_edit_modes(self):
+        render = self.ns["render_work_order_status_list"]
+        for editing in (False, True):
+            table = next(child for child in render(self.snapshot, editing).children
+                         if isinstance(child, dash_table.DataTable))
+            self.assertEqual(table.row_selectable, "single" if editing else False)
+            self.assertEqual(table.selected_row_ids, [])
+        toggle = self.ns["toggle_work_order_edit_mode"]
+        self.callback_context.triggered = [{"prop_id": "edit_work_order_status_list.n_clicks"}]
+        enabled = toggle(1, 1, 0, 0, False)
+        self.assertEqual(enabled[:2], (True, "完成"))
+        self.assertEqual(enabled[2]["display"], "flex")
+        self.assertEqual(toggle(2, 1, 0, 0, True)[0], False)
+        self.callback_context.triggered = [{"prop_id": "open_work_order_status_list.n_clicks"}]
+        reset = toggle(2, 2, 1, 0, True)
+        self.assertEqual(reset[:2], (False, "编辑"))
+        self.assertEqual(reset[2]["display"], "none")
 
     def test_selected_identity_persistence_and_scope(self):
         session["fault_ai_authenticated"] = True
