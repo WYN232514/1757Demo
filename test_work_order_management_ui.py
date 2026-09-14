@@ -52,9 +52,9 @@ class ManagementUITests(unittest.TestCase):
         module = ast.Module(body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0)] + functions, type_ignores=[])
         exec(compile(ast.fix_missing_locations(module), "actual_callbacks", "exec"), self.ns)
 
-    def call(self, trigger, ids=None, scope="list", token=None):
+    def call(self, trigger, ids=None, token=None):
         self.callback_context.triggered = [{"prop_id": trigger}]
-        return self.ns["manage_work_order_deletion"](1, 1, 1, ids, scope, token)
+        return self.ns["manage_work_order_deletion"](1, 1, 1, ids, token)
 
     def test_auth_cancel_and_invalid_confirmation(self):
         result = self.call("request_work_order_delete.n_clicks", ["5001727589"])
@@ -89,18 +89,19 @@ class ManagementUITests(unittest.TestCase):
 
     def test_selected_identity_persistence_and_scope(self):
         session["fault_ai_authenticated"] = True
-        result = self.call("request_work_order_delete.n_clicks", ["5001725262"], "list")
+        result = self.call("request_work_order_delete.n_clicks", ["5001727589"])
         # Confirmation uses the frozen server-side identity, not a changed selection.
-        self.call("work_order_delete_confirm.submit_n_clicks", ["5001727589"], "recommendation", result[2])
-        self.assertEqual(exclusions(self.path), {"5001725262"})
-        self.assertEqual(len(self.ns["load_library"]()[1]), 2)
-        result = self.call("request_work_order_delete.n_clicks", ["5001727589"], "recommendation")
-        self.call("work_order_delete_confirm.submit_n_clicks", token=result[2])
+        self.call("work_order_delete_confirm.submit_n_clicks", ["5001725262"], token=result[2])
+        self.assertEqual(exclusions(self.path, recommendation_only=True), {"5001727589"})
+        self.assertEqual(self.ns["_SESSION_QUERIES"], {})
         vectors, metadata, _ = self.ns["load_library"]()
         self.assertEqual(metadata["work_order_no"].tolist(), [5001725262])
         np.testing.assert_array_equal(vectors, [[0., 1.]])
         self.assertEqual(metadata.index.tolist(), [0])
         self.assertEqual(len(self.bundle["metadata"]), 2)
+        # Previously list-only removals must also be excluded under the unified behavior.
+        exclude_work_order(self.path, "5001725262", "test", exclude_recommendation=False)
+        self.assertEqual(len(self.ns["load_library"]()[1]), 0)
         rendered = self.ns["render_work_order_status_list"](self.snapshot)
         table = next(child for child in rendered.children if isinstance(child, dash_table.DataTable))
         self.assertEqual(table.data, [])

@@ -40,3 +40,7 @@
 }
 .work-order-management-message { padding: 8px 18px; color: #ffe0a3; flex-shrink: 0; }
 .work-order-management-message:empty { display: none; }
+#work_order_edit_toolbar,
+#work_order_edit_toolbar span,
+#work_order_edit_toolbar button,
+#work_order_delete_message { color: #fff !important; -webkit-text-fill-color: #fff !important; }
