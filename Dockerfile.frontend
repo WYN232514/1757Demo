@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements-server.txt
 
 COPY app_visualize.py api_service.py gateway_download.py vcb_case_library_direct.py raw_data_catalog.py iceberg_raw_reader.py llm_api_tool.py work_order_fault_extractor.py scheduled_work_order_sync.py ./
 COPY gateway_metrics.json ./
+COPY work_order_management.py ./
 COPY assets ./assets
 COPY knowledge_graph/vcb_trip_knowledge_graph.json ./knowledge_graph/vcb_trip_knowledge_graph.json
 COPY fault_extractor/fault_extractor ./fault_extractor/fault_extractor

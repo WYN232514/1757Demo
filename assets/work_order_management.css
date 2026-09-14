@@ -1,0 +1,51 @@
+/* Brighter work-order dialog, scoped to preserve the dashboard theme. */
+.work-order-status-dialog {
+    background: #15364d !important;
+    border-color: #5088a4 !important;
+}
+.work-order-status-head { background: #20475f !important; }
+.work-order-status-title { color: #fff; }
+.work-order-status-subtitle,
+.work-order-list-note,
+.work-order-list-stat span { color: #bdd9e8; }
+.work-order-list-stat { background: #234b63; border-color: #527e95; }
+.work-order-status-body .dash-table-container .dash-spreadsheet-inner td {
+    background-color: #24475d !important;
+    border-color: #42677d !important;
+}
+.work-order-status-body .dash-table-container .dash-spreadsheet-inner tr:nth-child(even) td {
+    background-color: #2c5168 !important;
+}
+.work-order-status-body .dash-table-container .dash-spreadsheet-inner th {
+    background-color: #365f77 !important;
+    color: #fff !important;
+    border-color: #527d96 !important;
+}
+.work-order-status-body .dash-table-container .dash-filter input {
+    background: #24475d !important;
+    color: #fff !important;
+    border: 1px solid #7297ab !important;
+    border-radius: 4px;
+    padding: 5px !important;
+}
+.work-order-status-body .dash-table-container .dash-filter input::placeholder {
+    color: #c4dce9 !important;
+}
+.work-order-status-refresh,
+.work-order-status-close { background: #2d607b; color: #fff; border-color: #659ab5; }
+.work-order-delete-button {
+    border: 1px solid #ff9caa;
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: #fff;
+    background: #97384c;
+    cursor: pointer;
+}
+.work-order-delete-button:disabled { opacity: .45; cursor: not-allowed; }
+.work-order-delete-button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+.work-order-management-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 10px 0; color: #d9eaf3; }
+.work-order-management-message { padding: 8px 18px; color: #fff0c5; }
+.work-order-management-toolbar,
+.work-order-management-message,
+.work-order-status-head { flex-shrink: 0; }
+.work-order-management-message:empty { display: none; }

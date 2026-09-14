@@ -86,6 +86,7 @@ from gateway_download import (
 )
 from raw_data_catalog import register_raw_window
 from iceberg_raw_reader import IcebergRawDataError, read_iceberg_raw_window
+from work_order_management import exclusions, exclude_work_order
 
 # ============================================================
 # 配置
@@ -174,6 +175,7 @@ EXCLUDED_SIMILARITY_NODE_PREFIXES = (
     "target_vcb_904_",
     "target_vcb_936_",
 )
+WORK_ORDER_MANAGEMENT_PATH = WORK_ORDER_SYNC_RUNTIME / "manual_exclusions.sqlite3"
 
 # These are train-level/shared variables. Their gateway equipUnit is 0 and
 # the ``01`` inside the code is not a passenger-car number. Never rewrite
@@ -312,7 +314,10 @@ def _load_qdrant_bundle() -> Dict[str, Any]:
 
 def load_library():
     bundle = _load_qdrant_bundle()
-    return bundle["vectors"], bundle["metadata"], bundle["node_index"]
+    excluded = exclusions(WORK_ORDER_MANAGEMENT_PATH, recommendation_only=True)
+    metadata = bundle["metadata"]
+    keep = ~metadata["work_order_no"].astype(str).str.removesuffix(".0").isin(excluded)
+    return bundle["vectors"][keep.to_numpy()], metadata.loc[keep].reset_index(drop=True), bundle["node_index"]
 
 
 def load_segments() -> Dict[str, Any]:
@@ -5204,11 +5209,13 @@ def load_all_work_order_statuses(force: bool = False) -> Dict[str, Any]:
 
 
 def render_work_order_status_list(snapshot: Mapping[str, Any]) -> html.Div:
-    rows = list(snapshot.get("rows") or [])
+    hidden = exclusions(WORK_ORDER_MANAGEMENT_PATH)
+    rows = [dict(row, id=str(row["工单号"])) for row in snapshot.get("rows", [])
+            if str(row["工单号"]) not in hidden]
     summary_items = [
-        ("符合条件", snapshot.get("total", 0), "all"),
-        ("已加入 Qdrant", snapshot.get("added", 0), "added"),
-        ("未加入/待处理", snapshot.get("not_added", 0), "missing"),
+        ("当前列表", len(rows), "all"),
+        ("已加入 Qdrant", sum(row["Qdrant状态"] == "已加入" for row in rows), "added"),
+        ("未加入/待处理", sum(row["Qdrant状态"] != "已加入" for row in rows), "missing"),
         ("上次更新", snapshot.get("last_update", "—"), "time"),
         ("下次更新", snapshot.get("next_update", "—"), "time"),
     ]
@@ -5224,6 +5231,9 @@ def render_work_order_status_list(snapshot: Mapping[str, Any]) -> html.Div:
         dash_table.DataTable(
             id="all_work_order_status_table",
             data=rows,
+            row_selectable="single",
+            selected_rows=[],
+            selected_row_ids=[],
             columns=[{"name": name, "id": name} for name in [
                 "工单号", "车辆", "报告时间", "工单状态", "描述", "Qdrant状态", "未加入原因"
             ]],
@@ -5283,6 +5293,9 @@ app.layout = html.Div(
     children=[
         dcc.Location(id="page_url", refresh=False),
         dcc.Store(id="session_id", storage_type="session", data=None),
+        dcc.Store(id="work_order_delete_revision", data=None),
+        dcc.Store(id="work_order_delete_pending", data=None),
+        dcc.ConfirmDialog(id="work_order_delete_confirm"),
         dcc.Store(id="ts_selection", data=None),
         dcc.Store(id="query_revision", data=None),
         dcc.Store(id="ts_hover_sink", data=None),
@@ -5385,9 +5398,19 @@ app.layout = html.Div(
                             children=html.Div(
                                 id="work_order_status_modal_content",
                                 className="work-order-status-body",
-                                children=html.Div("打开列表后加载工单状态。", className="work-order-status-empty"),
+                                children=render_work_order_status_list({"rows": []}),
                             ),
                         ),
+                        html.Div(className="work-order-management-toolbar", style={"padding": "0 18px"}, children=[
+                            html.Span("选择一条工单后可删除："),
+                            dcc.RadioItems(id="work_order_delete_scope", options=[
+                                {"label": "仅从列表移除", "value": "list"},
+                                {"label": "同时停止相似度推荐", "value": "recommendation"},
+                            ], value="list", inline=True, inputStyle={"margin": "0 6px 0 12px"}),
+                            html.Button("删除选中工单", id="request_work_order_delete",
+                                        className="work-order-delete-button", n_clicks=0),
+                        ]),
+                        html.Div(id="work_order_delete_message", className="work-order-management-message", role="status"),
                     ],
                 ),
             ],
@@ -6417,9 +6440,10 @@ def toggle_work_order_status_modal(open_clicks, _close_clicks, _backdrop_clicks)
     Output("work_order_status_modal_content", "children"),
     Input("open_work_order_status_list", "n_clicks"),
     Input("refresh_work_order_status_list", "n_clicks"),
+    Input("work_order_delete_revision", "data"),
     prevent_initial_call=True,
 )
-def update_work_order_status_modal(open_clicks, _refresh_clicks):
+def update_work_order_status_modal(open_clicks, _refresh_clicks, _delete_revision):
     if not open_clicks:
         raise PreventUpdate
     triggered = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else ""
@@ -6433,6 +6457,71 @@ def update_work_order_status_modal(open_clicks, _refresh_clicks):
             f"工单列表读取失败：{exc}",
             className="work-order-status-empty error",
         )
+
+
+@app.callback(
+    Output("work_order_delete_confirm", "displayed"),
+    Output("work_order_delete_confirm", "message"),
+    Output("work_order_delete_pending", "data"),
+    Output("work_order_delete_message", "children"),
+    Output("work_order_delete_revision", "data"),
+    Input("request_work_order_delete", "n_clicks"),
+    Input("work_order_delete_confirm", "submit_n_clicks"),
+    Input("work_order_delete_confirm", "cancel_n_clicks"),
+    State("all_work_order_status_table", "selected_row_ids"),
+    State("work_order_delete_scope", "value"),
+    State("work_order_delete_pending", "data"),
+    prevent_initial_call=True,
+)
+def manage_work_order_deletion(_request, _submit, _cancel, selected_ids, scope, token):
+    trigger = callback_context.triggered[0]["prop_id"]
+    if session.get("fault_ai_authenticated") is not True:
+        return False, "", None, "请登录后再操作。", no_update
+    if trigger == "work_order_delete_confirm.cancel_n_clicks":
+        session.pop("pending_work_order_deletion", None)
+        return False, "", None, "已取消删除。", no_update
+    if trigger == "request_work_order_delete.n_clicks":
+        session.pop("pending_work_order_deletion", None)
+        if not selected_ids or len(selected_ids) != 1:
+            return False, "", None, "请先勾选一条工单。", no_update
+        work_order = str(selected_ids[0])
+        if scope not in {"list", "recommendation"}:
+            return False, "", None, "请选择删除范围。", no_update
+        try:
+            allowed = {str(row["工单号"]) for row in load_all_work_order_statuses()["rows"]}
+            if work_order not in allowed or work_order in exclusions(WORK_ORDER_MANAGEMENT_PATH):
+                return False, "", None, "该工单已不在当前列表，请刷新。", no_update
+        except Exception:
+            return False, "", None, "暂时无法核对工单，请刷新列表后重试。", no_update
+        token = secrets.token_urlsafe(24)
+        session["pending_work_order_deletion"] = {
+            "token": token, "work_order": work_order, "scope": scope, "created": time.time(),
+        }
+        effect = ("同时停止该工单参与之后的相似度推荐。" if scope == "recommendation"
+                  else "仅从列表移除，该工单仍可参与相似度推荐。")
+        message = (f"确认删除工单 {work_order}？\n\n{effect}\n"
+                   "此操作对所有用户生效，刷新后仍保持。原始工单及案例记录保留，可由管理员恢复。")
+        return True, message, token, "", no_update
+    if trigger != "work_order_delete_confirm.submit_n_clicks" or not _submit:
+        raise PreventUpdate
+    pending = session.pop("pending_work_order_deletion", None)
+    if (not pending or not token or not hmac.compare_digest(str(token), pending["token"])
+            or time.time() - pending["created"] > 600):
+        return False, "", None, "确认已过期，请重新选择工单并点击删除。", no_update
+    try:
+        exclude_work_order(
+            WORK_ORDER_MANAGEMENT_PATH, pending["work_order"], session.get("fault_ai_user", ""),
+            exclude_recommendation=pending["scope"] == "recommendation",
+        )
+    except Exception:
+        return False, "", None, "删除未保存，请重试；列表保持不变。", no_update
+    if pending["scope"] == "recommendation":
+        with _SESSION_QUERIES_LOCK:
+            _SESSION_QUERIES.clear()
+    message = f"已从列表移除工单 {pending['work_order']}。"
+    if pending["scope"] == "recommendation":
+        message += "已停止后续推荐，请重新查询以更新当前结果。"
+    return False, "", None, message, secrets.token_hex(8)
 
 
 @app.callback(
